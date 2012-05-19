@@ -39,6 +39,9 @@ When creating or editing a Page, Post or Custom Post Type, sending the update to
 
 == Changelog ==
 
+= 1.01 =
+* SSL verification fix for Buffer API authentication.
+
 = 1.0 =
 * First release.
 

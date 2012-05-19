@@ -2,7 +2,7 @@
 /**
 * Plugin Name: WP to Buffer
 * Plugin URI: http://www.n7studios.co.uk/2012/04/29/wordpress-to-buffer-plugin/
-* Version: 1.0
+* Version: 1.01
 * Author: <a href="http://www.n7studios.co.uk/">n7 Studios</a>
 * Description: Unofficial Plugin to send WordPress Pages, Posts or Custom Post Types to your bufferapp.com account for scheduled publishing to social networks.
 */
@@ -13,7 +13,7 @@
 * @package WordPress
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 1.0
+* @version 1.01
 * @copyright n7 Studios
 */
 class WPToBuffer {
@@ -349,10 +349,16 @@ class WPToBuffer {
 					'redirect_uri' => $this->plugin->settingsUrl,
 					'code' => $_GET['code'],
 					'grant_type' => 'authorization_code'
-				)
+				),
+				'sslverify' => false
 			));
 			
 			// Check the request is valid
+			if (is_wp_error($result)) {
+				$this->errorMessage = $result->get_error_message();
+				return false;	
+			}
+			
 			if ($result['response']['code'] != 200) {
 				$this->errorMessage = 'Error '.$result['response']['code'].' whilst trying to authenticate: '.$result['response']['message'].'. Please try again.';
 				$this->authUrl = $this->BufferAPIAuthURL();
@@ -404,12 +410,14 @@ class WPToBuffer {
 		switch ($method) {
 			case 'get':
 				$result = wp_remote_get('https://api.bufferapp.com/1/'.$cmd.'?access_token='.$accessToken, array(
-		    		'body' => $params
+		    		'body' => $params,
+		    		'sslverify' => false
 		    	));
 				break;
 			case 'post':
 				$result = wp_remote_post('https://api.bufferapp.com/1/'.$cmd.'?access_token='.$accessToken, array(
-		    		'body' => $params
+		    		'body' => $params,
+		    		'sslverify' => false
 		    	));
 				break;
 		}
