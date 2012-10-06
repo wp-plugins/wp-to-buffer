@@ -2,7 +2,7 @@
 /**
 * Plugin Name: WP to Buffer
 * Plugin URI: http://www.n7studios.co.uk/2012/04/29/wordpress-to-buffer-plugin/
-* Version: 1.01
+* Version: 1.02
 * Author: <a href="http://www.n7studios.co.uk/">n7 Studios</a>
 * Description: Unofficial Plugin to send WordPress Pages, Posts or Custom Post Types to your bufferapp.com account for scheduled publishing to social networks.
 */
@@ -13,7 +13,7 @@
 * @package WordPress
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 1.01
+* @version 1.02
 * @copyright n7 Studios
 */
 class WPToBuffer {
@@ -30,9 +30,18 @@ class WPToBuffer {
 		$this->plugin->publishDefaultString = 'New Post: {title} {url}';
 		$this->plugin->updateDefaultString = 'Updated Post: {title} {url}';
 
+		// Publish Actions
+		$types = get_post_types('', 'names');
+		foreach ($types as $key=>$type) {
+			if (in_array($type, $this->plugin->ignorePostTypes)) continue; // Skip ignored Post Types
+			
+			add_action('publish_'.$type, array(&$this, 'PublishToBufferNow'));
+			add_action('publish_future_'.$type, array(&$this, 'PublishToBufferFuture'));
+			add_action('xmlrpc_publish_'.$type, array(&$this, 'PublishToBufferXMLRPC'));
+		}
+	
         if (is_admin()) {
             add_action('init', array(&$this, 'AdminScriptsAndCSS'));
-            add_action('init', array(&$this, 'AddPublishActions'), 99);
             add_action('admin_menu', array(&$this, 'AddAdminPanelsAndMetaBoxes'));
             add_action('admin_notices', array(&$this, 'AdminNotices'));
             add_action('save_post', array(&$this, 'Save'));  
@@ -76,9 +85,9 @@ class WPToBuffer {
     	foreach ($types as $key=>$type) {
     		if (in_array($type, $this->plugin->ignorePostTypes)) continue; // Skip ignored Post Types
     		
-    		add_action('publish_'.$type, array(&$this, 'PublishToBufferNow'), 99);
-			add_action('publish_future_'.$type, array(&$this, 'PublishToBufferFuture'), 99);
-			add_action('xmlrpc_publish_'.$type, array(&$this, 'PublishToBufferXMLRPC'), 99);
+    		add_action('publish_'.$type, array(&$this, 'PublishToBufferNow'));
+			add_action('publish_future_'.$type, array(&$this, 'PublishToBufferFuture'));
+			add_action('xmlrpc_publish_'.$type, array(&$this, 'PublishToBufferXMLRPC'));
 		}
     }
     
@@ -172,7 +181,7 @@ class WPToBuffer {
     * @param int $postID Post ID
     */
     function PublishToBufferFuture($postID) {
-    	$this->Publish($postID, 'publish');
+    	$this->Publish($postID, true);
     }
     
     /**
@@ -183,64 +192,44 @@ class WPToBuffer {
     * @param int $postID Post ID
     */
     function PublishToBufferXMLRPC($postID) {
-    	$this->Publish($postID);	
+    	$this->Publish($postID, true);	
     }
     
     /**
     * Called when any Page, Post or Custom Post Type is published or updated, live or for a scheduled post
     *
     * @param int $postID Post ID
-    * @param string $updateType Update Type (if blank, will auto calculate)
     */
-    function Publish($postID, $updateType = '') {
+    function Publish($postID, $isPublishAction = false) {
     	$meta = get_post_meta($postID, $this->plugin->name, true); // Get post meta
         $defaults = get_option($this->plugin->name); // Get settings
         
-        // If no meta defined, this is a brand new post - read from post data
-        if (!is_array($meta) OR count($meta) == 0) $meta['publish'] = $_POST[$this->plugin->name]['publish'];
-
+        if (!is_array($meta) OR count($meta) == 0) $meta['publish'] = $_POST[$this->plugin->name]['publish']; // If no meta defined, this is a brand new post - read from post data
         if ($defaults['accessToken'] == '') return false; // No access token so cannot publish to Buffer
         if ($meta['publish'] != '1') return false; // Do not need to publish or update
         
         // Get post
         $post = get_post($postID);
-
-        // Get images
-		$images = get_children(array(
-			'post_parent' => $postID,
-			'post_type' => 'attachment',
-			'post_mime_type' =>'image'
-		));
-		
-		if ($updateType != '') {
-			$doUpdate = true;
-		} else {		
-			// Check if post is newly published
-			$doUpdate = false;
-			
-			if (($post->post_status == 'publish' OR $_POST['publish'] == __('Publish')) AND
-				($_POST['prev_status'] == 'draft' OR $_POST['original_post_status'] == 'draft' OR $_POST['original_post_status'] == 'auto-draft'
-				OR $_POST['prev_status'] == 'pending' OR $_POST['original_post_status'] == 'pending')) {
-				// Publish
-				$doUpdate = true;
-				$updateType = 'publish';
-			} elseif ((($_POST['originalaction'] == 'editpost') AND 
-				(($_POST['prev_status'] == 'publish') OR 
-				($_POST['original_post_status'] == 'publish'))) AND 
-				$post->post_status == 'publish') {
-				
-				if ($defaults['enabled'][$post->post_type]['update'] == '1') {
-					// Send update to Buffer
-					$doUpdate = true;
-					$updateType = 'update';
-				}	
-			}
-		}
-		
-		// Check if we need to send an update
-		if (!$doUpdate) return false;
-		
-		// If here, build and send data to Buffer
+        
+        if ($_POST['original_post_status'] == 'draft' OR 
+        	$_POST['original_post_status'] == 'auto-draft' OR 
+        	$_POST['original_post_status'] == 'pending' OR
+        	$_POST['original_post_status'] == 'future' OR
+        	$isPublishAction) {
+        	
+        	// Publish?
+        	if ($defaults['enabled'][$post->post_type]['publish'] != '1') return false; // No Buffer needed for publish
+        	$updateType = 'publish';
+        	
+        }
+        
+		if ($_POST['original_post_status'] == 'publish') {
+        	// Update?
+        	if ($defaults['enabled'][$post->post_type]['update'] != '1') return false; // No Buffer needed for update
+        	$updateType = 'update';
+        }
+        
+        // If here, build and send data to Buffer
 
 		// 1. Get post categories if any exist
 		$catNames = '';
@@ -254,18 +243,6 @@ class WPToBuffer {
 		
 		// 2. Get author
 		$author = get_user_by('id', $post->post_author);
-		
-		// 3. Get featured image, if any exists
-		/*
-		if (get_post_image_id($postID) > 0) {
-			$image = wp_get_attachment_image_src(get_post_image_id($postID), 'medium');
-			if (is_array($image) AND count($image) > 0) {
-				$params['media']['link'] = get_permalink($postID);
-				$params['media']['description'] = $post->post_excerpt;
-				$params['media']['picture'] = $image[0];
-			}
-		}
-		*/
 		
 		// 4. Parse text and description
 		$params['text'] = $defaults['message'][$post->post_type][$updateType];

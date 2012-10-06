@@ -1,9 +1,9 @@
 === WP to Buffer ===
-Contributors: Tim Carr
+Contributors: n7studios
 Donate link: http://www.n7studios.co.uk/2012/04/29/wordpress-to-buffer-plugin/
 Tags: buffer,bufferapp,schedule,twitter,facebook,post
 Requires at least: 3.0
-Tested up to: 3.3.2
+Tested up to: 3.4.2
 Stable tag: trunk
 
 Unofficial Plugin to send WordPress Pages, Posts or Custom Post Types to your bufferapp.com account for scheduled publishing to social networks.
@@ -38,6 +38,9 @@ When creating or editing a Page, Post or Custom Post Type, sending the update to
 4. Post level settings meta box.
 
 == Changelog ==
+
+= 1.02 =
+* Fix: Scheduled Posts now post to Buffer on scheduled publication.
 
 = 1.01 =
 * SSL verification fix for Buffer API authentication.
