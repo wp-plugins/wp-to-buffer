@@ -39,6 +39,9 @@ When creating or editing a Page, Post or Custom Post Type, sending the update to
 
 == Changelog ==
 
+= 1.03 =
+* Fix: Publish hooks now based on settings instead of registered post types, to ensure they hook early enough to work on custom post types.
+
 = 1.02 =
 * Fix: Scheduled Posts now post to Buffer on scheduled publication.
 

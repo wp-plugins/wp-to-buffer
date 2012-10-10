@@ -2,7 +2,7 @@
 /**
 * Plugin Name: WP to Buffer
 * Plugin URI: http://www.n7studios.co.uk/2012/04/29/wordpress-to-buffer-plugin/
-* Version: 1.02
+* Version: 1.03
 * Author: <a href="http://www.n7studios.co.uk/">n7 Studios</a>
 * Description: Unofficial Plugin to send WordPress Pages, Posts or Custom Post Types to your bufferapp.com account for scheduled publishing to social networks.
 */
@@ -13,7 +13,7 @@
 * @package WordPress
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 1.02
+* @version 1.03
 * @copyright n7 Studios
 */
 class WPToBuffer {
@@ -30,14 +30,14 @@ class WPToBuffer {
 		$this->plugin->publishDefaultString = 'New Post: {title} {url}';
 		$this->plugin->updateDefaultString = 'Updated Post: {title} {url}';
 
-		// Publish Actions
-		$types = get_post_types('', 'names');
-		foreach ($types as $key=>$type) {
-			if (in_array($type, $this->plugin->ignorePostTypes)) continue; // Skip ignored Post Types
-			
-			add_action('publish_'.$type, array(&$this, 'PublishToBufferNow'));
-			add_action('publish_future_'.$type, array(&$this, 'PublishToBufferFuture'));
-			add_action('xmlrpc_publish_'.$type, array(&$this, 'PublishToBufferXMLRPC'));
+		// Publish Actions for chosen post types
+		$settings = get_option($this->plugin->name);
+		if (is_array($settings['enabled'])) {
+			foreach ($settings['enabled'] as $type=>$opts) {
+				add_action('publish_'.$type, array(&$this, 'PublishToBufferNow'));
+				add_action('publish_future_'.$type, array(&$this, 'PublishToBufferFuture'));
+				add_action('xmlrpc_publish_'.$type, array(&$this, 'PublishToBufferXMLRPC'));	
+			}
 		}
 	
         if (is_admin()) {
@@ -210,7 +210,7 @@ class WPToBuffer {
         
         // Get post
         $post = get_post($postID);
-        
+
         if ($_POST['original_post_status'] == 'draft' OR 
         	$_POST['original_post_status'] == 'auto-draft' OR 
         	$_POST['original_post_status'] == 'pending' OR
@@ -220,7 +220,6 @@ class WPToBuffer {
         	// Publish?
         	if ($defaults['enabled'][$post->post_type]['publish'] != '1') return false; // No Buffer needed for publish
         	$updateType = 'publish';
-        	
         }
         
 		if ($_POST['original_post_status'] == 'publish') {
