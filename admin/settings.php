@@ -99,8 +99,10 @@
 	                                </p>
 	                                <p>
 	                                	You can obtain an access token to allow this Plugin to post updates to your Buffer account by
-	                                	<a href="http://bufferapp.com/developers/apps/create" target="_blank">Registering an Application</a>.
-	                                	Then copy the Access Token on the <a href="http://bufferapp.com/developers/apps" target="_blank">Registered Apps</a> screen, pasting it in the field above.
+	                                	<a href="http://bufferapp.com/developers/apps/create" target="_blank">Registering an Application</a>
+	                                </p>
+	                                <p>
+	                                	Set the Callback URL to <strong><?php bloginfo('url'); ?>/wp-admin/admin.php?page=<?php echo $this->plugin->name; ?></strong>. You can set the other settings to anything.
 	                                </p>
 	                            	<?php
 	                        	}

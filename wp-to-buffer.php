@@ -2,7 +2,7 @@
 /**
 * Plugin Name: WP to Buffer
 * Plugin URI: http://www.wpcube.co.uk/plugins/wp-to-buffer-pro/ 
-* Version: 1.1
+* Version: 2.0
 * Author: <a href="http://www.n7studios.co.uk">n7 Studios</a>, <a href="http://www.wpcube.co.uk">WP Cube</a>
 * Description: Send WordPress Pages, Posts or Custom Post Types to your bufferapp.com account for scheduled publishing to social networks.
 * License: GPL2
@@ -30,7 +30,7 @@
 * @package WordPress
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 1.1
+* @version 2.0
 * @copyright n7 Studios
 */
 class WPToBuffer {
@@ -59,7 +59,7 @@ class WPToBuffer {
 		}
 	
         if (is_admin()) {
-            add_action('init', array(&$this, 'AdminScriptsAndCSS'));
+            add_action('admin_enqueue_scripts', array(&$this, 'AdminScriptsAndCSS'));
             add_action('admin_menu', array(&$this, 'AddAdminPanelsAndMetaBoxes'));
             add_action('admin_notices', array(&$this, 'AdminNotices'));
             add_action('save_post', array(&$this, 'Save'));  
@@ -71,12 +71,10 @@ class WPToBuffer {
     */
     function AdminScriptsAndCSS() {
     	// JS
-    	wp_register_script($this->plugin->name.'-admin-js', $this->plugin->url.'js/admin.js');
-       	wp_enqueue_script($this->plugin->name.'-admin-js'); 
-                
+    	wp_enqueue_script($this->plugin->name.'-admin-js', $this->plugin->url.'js/admin.js');
+    	        
     	// CSS
-        wp_register_style($this->plugin->name.'-admin-css', $this->plugin->url.'css/admin.css'); 
-        wp_enqueue_style($this->plugin->name.'-admin-css');   
+        wp_enqueue_style($this->plugin->name.'-admin-css', $this->plugin->url.'css/admin.css'); 
     }
     
     /**
@@ -319,8 +317,33 @@ class WPToBuffer {
     function AdminPanel() {
         // Save Settings
         if (isset($_POST['submit'])) {
-            update_option($this->plugin->name, $_POST[$this->plugin->name]);
-            $this->message = __('Settings Updated.'); 
+        	// Check the access token, in case it hasn't been copied / pasted correctly
+        	// This happens when you double click the Access Token on http://bufferapp.com/developers/apps, which doesn't
+        	// quite select the entire access token
+        	$tokenLength = strlen($_POST[$this->plugin->name]['accessToken']);
+        	if ($tokenLength > 0) {
+        		// Check if token is missing 1/ at the start
+        		if (substr($_POST[$this->plugin->name]['accessToken'], 0, 2) != '1/') {
+        			// Missing
+        			$this->errorMessage = __('Oops - you\'ve not quite copied your access token from Buffer correctly. It should start with 1/. Please try again.');
+        		} elseif (substr($_POST[$this->plugin->name]['accessToken'], $tokenLength-4, 4) == 'Edit') {
+        			$this->errorMessage = __('Oops - you\'ve not quite copied your access token from Buffer correctly. It should not end with the word Edit. Please try again.');
+        		}
+        	} else {
+        		$this->errorMessage = __('Please enter an access token to use this plugin. You can obtain one by following the instructions below.');
+        	}
+        	
+        	// Test access token to make sure it's valid
+        	if (!isset($this->errorMessage)) {
+        		$user = $this->Request($_POST[$this->plugin->name]['accessToken'], 'user.json');
+        		if (!is_object($user)) {
+        			$this->errorMessage = $user;
+        		} else {
+        			// Ok - save
+        			update_option($this->plugin->name, $_POST[$this->plugin->name]);
+            		$this->message = __('Settings Updated.');
+        		}	
+            }
         }
         
         // Disconnect?
