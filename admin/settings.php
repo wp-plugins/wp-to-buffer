@@ -29,17 +29,22 @@
                     	any donations for ongoing development and support are greatly appreciated.</p>
 						
 						<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
-							<input type="hidden" name="cmd" value="_s-xclick">
-							<input type="hidden" name="hosted_button_id" value="RBAHE4QWKJX3N">
-							<input type="hidden" name="on0" value="Donation">
-							<select name="os0">
-								<option value="2">$2.50 USD</option>
-								<option value="5">$5 USD</option>
-								<option value="10">$10 USD</option>
-							</select> 
-							<input type="hidden" name="currency_code" value="USD">
-							<input type="submit" name="donate" value="Donate Now" class="button">
-							<img alt="" border="0" src="https://www.paypalobjects.com/en_GB/i/scr/pixel.gif" width="1" height="1">
+							<p>
+								<input type="hidden" name="cmd" value="_s-xclick">
+								<input type="hidden" name="hosted_button_id" value="RBAHE4QWKJX3N">
+								<input type="hidden" name="on0" value="Donation">
+								<select name="os0">
+									<option value="2">&pound;2 GBP (~ $3 USD)</option>
+									<option value="5">&pound;5 GBP (~ $8 USD)</option>
+									<option value="7">&pound;7.50 GBP (~ $12 USD)</option>
+									<option value="10">&pound;10 GBP (~ $15 USD)</option>
+								</select> 
+								<input type="hidden" name="currency_code" value="GBP">
+							</p>
+							<p>
+								<input type="submit" name="donate" value="Donate Now" class="button button-primary" />
+								<img alt="" border="0" src="https://www.paypalobjects.com/en_GB/i/scr/pixel.gif" width="1" height="1" />
+							</p>
 						</form>
                     </div>  
                 </div>
@@ -49,14 +54,14 @@
                     <div class="handlediv" title="Click to toggle"><br /></div>
                     <h3 class="hndle"><span>Keep Updated</span></h3>
                     <div class="inside">
-                    	<p>Subscribe to the newsletter and receive updates on latest projects and offers.</p>
-                        <form action="http://n7studios.us1.list-manage.com/subscribe/post?u=c7802146e97a6ea2f03bb5338&amp;id=3460487f6f" method="post" target="_blank">
-		            		<p>
-		            			<label for="email">Email Address</label>
-		            			<input type="text" name="EMAIL" value="" placeholder="Enter your email address" />
-		            			<input type="submit" name="subscribe" value="Subscribe" class="button" />
-		            		</p>
-		            	</form>
+                    	<p><?php _e('Subscribe to the newsletter and receive updates on latest projects and offers'); ?>.</p>
+                    	<form action="http://n7studios.createsend.com/t/r/s/jdkdjui/" method="post" id="subForm" target="_blank">
+		                    <p>
+		                        <label for="jdkdjui-jdkdjui"><?php _e('Email Address'); ?></label>
+		                        <input type="text" name="cm-jdkdjui-jdkdjui" id="jdkdjui-jdkdjui" placeholder="<?php _e('Enter your email address'); ?>" />
+		                        <input type="submit" name="submit" value="<?php _e('Subscribe'); ?>" class="button" />
+		                    </p>
+		                </form>
                     </div>  
                 </div>
             </div>
@@ -76,53 +81,30 @@
 	                        		// Already authenticated
 	                        		?>
 	                        		<p>
-	                        			Thanks - you've authenticated the plugin with your Buffer account.
-	                        			<input type="hidden" name="<?php echo $this->plugin->name; ?>[clientID]" value="<?php echo $this->settings['clientID']; ?>" />
-	                        			<input type="hidden" name="<?php echo $this->plugin->name; ?>[clientSecret]" value="<?php echo $this->settings['clientSecret']; ?>" />
-	                        			<input type="hidden" name="<?php echo $this->plugin->name; ?>[accessToken]" value="<?php echo $this->settings['accessToken']; ?>" />
+	                        			<?php _e('Thanks - you\'ve authenticated the plugin with your Buffer account.'); ?>
+	                        		    <input type="hidden" name="<?php echo $this->plugin->name; ?>[accessToken]" value="<?php echo $this->settings['accessToken']; ?>" class="widefat" />  
+	                                </p>
+	                        		<p>
+	                        			<a href="admin.php?page=<?php echo $this->plugin->name; ?>&disconnect=1" class="button button-primary">
+	                        				<?php _e('Disconnect Buffer'); ?>
+	                        			</a>
 	                        		</p>
-	                        		<p><a href="admin.php?page=<?php echo $this->plugin->name; ?>&revoke=1" class="button">Revoke Access</a></p>
 	                        		<?php
 	                        	} else {
-	                            	if ($this->settings['clientID'] == '' OR $this->settings['clientSecret'] == '') {
-	                            		?>
-	                            		<p><strong>New Buffer User?</strong> <a href="http://bufferapp.com/r/1c4b4" target="_blank">Create an account</a> over at bufferapp.com before continuing.</p>
-	                            		<p>Using the above link ensures both you and I each get space for an extra post in our Buffer accounts.</p>
-		                            	<p>
-		                            		If you haven't already created an application with Buffer, visit <a href="http://bufferapp.com/developers/apps/create" target="_blank">http://bufferapp.com/developers/apps/create</a>,
-		                            		using the following details:<br />
-		                            		<strong>Name: </strong><?php bloginfo('name'); ?><br />
-		                            		<strong>Description: </strong>Content updates from <?php bloginfo('name'); ?><br />
-		                            		<strong>Website: </strong><?php bloginfo('url'); ?><br />
-		                            		<strong>Callback URL: </strong><?php echo $this->plugin->settingsUrl; ?><br />
-		                            	</p>
-		                            	<p>Once complete, make a note of your Client ID and Client Secret in the email you receive from Buffer.</p>
-	                            		<?php
-	                            	}
 	                            	?>
-	
-	                                <p><strong><?php _e('Client ID'); ?></strong></p>
+	                            	<p><strong><?php _e('Access Token'); ?></strong></p>
 	                                <p>
-	                                    <label class="screen-reader-text" for="label"><?php _e('Client ID'); ?></label>
-	                                    <input type="text" name="<?php echo $this->plugin->name; ?>[clientID]" value="<?php echo $this->settings['clientID']; ?>" class="widefat" />  
+	                                    <label class="screen-reader-text" for="label"><?php _e('Access Token'); ?></label>
+	                                    <input type="text" name="<?php echo $this->plugin->name; ?>[accessToken]" value="<?php echo $this->settings['accessToken']; ?>" class="widefat" />  
 	                                </p>
-	                                <p class="description"><?php _e('The Client ID, as specified in the email you received from Buffer when creating your application at <a href="http://bufferapp.com/developers/apps/create" target="_blank">http://bufferapp.com/developers/apps/create</a>'); ?></p>
-																
-									<p><strong><?php _e('Client Secret'); ?></strong></p>
 	                                <p>
-	                                    <label class="screen-reader-text" for="label"><?php _e('Client Secret'); ?></label>
-	                                    <input type="text" name="<?php echo $this->plugin->name; ?>[clientSecret]" value="<?php echo $this->settings['clientSecret']; ?>" class="widefat" />  
+	                                	You can obtain an access token to allow this Plugin to post updates to your Buffer account by
+	                                	<a href="http://bufferapp.com/developers/apps/create" target="_blank">Registering an Application</a>
 	                                </p>
-	                                <p class="description"><?php _e('The Client Secret, as specified in the email you received from Buffer when creating your application at <a href="http://bufferapp.com/developers/apps/create" target="_blank">http://bufferapp.com/developers/apps/create</a>'); ?></p>
-								
-									<?php
-									if ($this->authUrl != '') {
-	                            		?>
-	                            		<p><strong><?php _e('Connect to Buffer API'); ?></strong></p>
-	                            		<p><a href="<?php echo $this->authUrl; ?>" class="button">Connect to Buffer API</a></p>
-	                            		<p class="description">Authenticate using oAuth 2.0 to allow this site to have access to your Buffer account to post updates.</p>
-	                            		<?php
-	                            	}
+	                                <p>
+	                                	Set the Callback URL to <strong><?php bloginfo('url'); ?>/wp-admin/admin.php?page=<?php echo $this->plugin->name; ?></strong>. You can set the other settings to anything.
+	                                </p>
+	                            	<?php
 	                        	}
 	                        	?>
 							</div>
@@ -201,7 +183,7 @@
 	                	
 	                    <!-- Save -->
 	                    <div class="submit">
-	                        <input type="submit" name="submit" value="<?php _e('Save'); ?>" /> 
+	                        <input type="submit" name="submit" value="<?php _e('Save'); ?>" class="button button-primary" /> 
 	                    </div>
 	                </div>
 	            </div>

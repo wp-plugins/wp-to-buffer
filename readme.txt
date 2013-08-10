@@ -1,12 +1,12 @@
 === WP to Buffer ===
-Contributors: n7studios
-Donate link: http://www.n7studios.co.uk/2012/04/29/wordpress-to-buffer-plugin/
+Contributors: n7studios,wpcube
+Donate link: http://www.wpcube.co.uk/plugins/wp-to-buffer/
 Tags: buffer,bufferapp,schedule,twitter,facebook,post
 Requires at least: 3.0
-Tested up to: 3.4.2
+Tested up to: 3.6
 Stable tag: trunk
 
-Unofficial Plugin to send WordPress Pages, Posts or Custom Post Types to your bufferapp.com account for scheduled publishing to social networks.
+Send WordPress Pages, Posts or Custom Post Types to your bufferapp.com account for scheduled publishing to social networks.
 
 == Description ==
 
@@ -33,11 +33,26 @@ When creating or editing a Page, Post or Custom Post Type, sending the update to
 == Screenshots ==
 
 1. Settings Panel when plugin is first installed.
-2. Settings Panel when Buffer client ID and client secret are entered.
+2. Settings Panel when Buffer Access Token is entered.
 3. Settings Panel showing available options for Posts, Pages and any Custom Post Types when the plugin is authenticated with Buffer.
 4. Post level settings meta box.
 
 == Changelog ==
+
+= 2.0 =
+* Fix: admin_enqueue_scripts used to prevent 3.6+ JS errors
+* Fix: Force older versions of WP to Buffer to upgrade to 2.x branch.
+* Fix: Check for Buffer accounts before outputting settings (avoids invalid argument errors).
+* Enhancement: Validation of access token to prevent several errors.
+* Enhancement: Add callback URL value (not required, but avoids user confusion).
+* Enhancement: Check the access token pasted into the settings field is potentially valid (avoids questions asking why the plugin doesn't work,
+because the user hasn't carefully checked the access token).
+
+= 1.1 =
+* Enhancement: Removed spaces from categories in hashtags (thanks, Douglas!)
+* Fix: "Error creating default object from empty value" message.
+* Enhancement: Added Featured Image when posting to Buffer, if available.
+* Fix: Simplified authentication process using Access Token. Fixes many common oAuth issues.
 
 = 1.03 =
 * Fix: Publish hooks now based on settings instead of registered post types, to ensure they hook early enough to work on custom post types.
