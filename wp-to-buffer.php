@@ -1,10 +1,27 @@
 <?php
 /**
 * Plugin Name: WP to Buffer
-* Plugin URI: http://www.n7studios.co.uk/2012/04/29/wordpress-to-buffer-plugin/
-* Version: 1.03
-* Author: <a href="http://www.n7studios.co.uk/">n7 Studios</a>
-* Description: Unofficial Plugin to send WordPress Pages, Posts or Custom Post Types to your bufferapp.com account for scheduled publishing to social networks.
+* Plugin URI: http://www.wpcube.co.uk/plugins/wp-to-buffer-pro/ 
+* Version: 2.0.1
+* Author: <a href="http://www.n7studios.co.uk">n7 Studios</a>, <a href="http://www.wpcube.co.uk">WP Cube</a>
+* Description: Send WordPress Pages, Posts or Custom Post Types to your bufferapp.com account for scheduled publishing to social networks.
+* License: GPL2
+*/
+
+/*  Copyright 2013 n7 Studios, WP Cube (email : tim@n7studios.co.uk)
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License, version 2, as 
+    published by the Free Software Foundation.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 /**
@@ -13,7 +30,7 @@
 * @package WordPress
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 1.03
+* @version 2.0.1
 * @copyright n7 Studios
 */
 class WPToBuffer {
@@ -22,6 +39,7 @@ class WPToBuffer {
     */
     function WPToBuffer() {
         // Plugin Details
+        $this->plugin = new stdClass;
         $this->plugin->name = 'wp-to-buffer';
         $this->plugin->displayName = 'WP to Buffer';
         $this->plugin->url = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
@@ -41,7 +59,7 @@ class WPToBuffer {
 		}
 	
         if (is_admin()) {
-            add_action('init', array(&$this, 'AdminScriptsAndCSS'));
+            add_action('admin_enqueue_scripts', array(&$this, 'AdminScriptsAndCSS'));
             add_action('admin_menu', array(&$this, 'AddAdminPanelsAndMetaBoxes'));
             add_action('admin_notices', array(&$this, 'AdminNotices'));
             add_action('save_post', array(&$this, 'Save'));  
@@ -53,12 +71,10 @@ class WPToBuffer {
     */
     function AdminScriptsAndCSS() {
     	// JS
-    	wp_register_script($this->plugin->name.'-admin-js', $this->plugin->url.'js/admin.js');
-       	wp_enqueue_script($this->plugin->name.'-admin-js'); 
-                
+    	wp_enqueue_script($this->plugin->name.'-admin-js', $this->plugin->url.'js/admin.js');
+    	        
     	// CSS
-        wp_register_style($this->plugin->name.'-admin-css', $this->plugin->url.'css/admin.css'); 
-        wp_enqueue_style($this->plugin->name.'-admin-css');   
+        wp_enqueue_style($this->plugin->name.'-admin-css', $this->plugin->url.'css/admin.css'); 
     }
     
     /**
@@ -211,6 +227,7 @@ class WPToBuffer {
         // Get post
         $post = get_post($postID);
 
+		// Determine if this is a publish or update action
         if ($_POST['original_post_status'] == 'draft' OR 
         	$_POST['original_post_status'] == 'auto-draft' OR 
         	$_POST['original_post_status'] == 'pending' OR
@@ -228,15 +245,14 @@ class WPToBuffer {
         	$updateType = 'update';
         }
         
-        // If here, build and send data to Buffer
-
 		// 1. Get post categories if any exist
 		$catNames = '';
 		$cats = wp_get_post_categories($postID, array('fields' => 'ids'));
 		if (is_array($cats) AND count($cats) > 0) {
 			foreach ($cats as $key=>$catID) {
 				$cat = get_category($catID);
-				$catNames .= '#'.$cat->name.' ';
+				$catName = strtolower(str_replace(' ', '', $cat->name));
+				$catNames .= '#'.$catName.' ';
 			}
 		}
 		
@@ -252,15 +268,47 @@ class WPToBuffer {
 		$params['text'] = str_replace('{date}', date('dS F Y', strtotime($post->post_date)), $params['text']);
 		$params['text'] = str_replace('{url}', get_permalink($postID), $params['text']);
 		$params['text'] = str_replace('{author}', $author->display_name, $params['text']);
+		
+		// 5. Check if we can include the Featured Image (if available) in the media
+		$featuredImageID = get_post_thumbnail_id($postID);
+		if ($featuredImageID > 0) {
+			// Get image source and attachment post
+			$featuredImageSrc = wp_get_attachment_image_src($featuredImageID, 'medium');
+			$attachment = new WP_Query(array(
+				'p' => $featuredImageID,
+				'post_parent' => $post->ID,
+				'post_status' => 'inherit',
+				'post_type' => 'attachment',
+				'post_mime_type' => 'image'
+			));
+			
+			// Build link, title and description of the image
+			if (count($attachment->posts) > 0) {
+				$image['link'] = $featuredImageSrc[0];
+				$image['title'] = $attachment->posts[0]->post_title;
+				if ($attachment->posts[0]->post_content != '') {
+					$image['description'] = $attachment->posts[0]->post_content;
+				} elseif ($attachment->posts[0]->post_excerpt != '') {
+					$image['description'] = $attachment->posts[0]->post_excerpt;
+				} else {
+					$image['description'] = $attachment->posts[0]->post_title;
+				}
+			}
+			
+			// Assign image array to media argument
+			$params['media'] = $image;
+		}
 
-		// 5. Add profile IDs
+		// 6. Add profile IDs
 		foreach ($defaults['ids'][$post->post_type] as $profileID=>$enabled) {
 			if ($enabled) $params['profile_ids'][] = $profileID; 
 		}
-	
-		// 6. Send to Buffer and store response
+		
+		// 7. Send to Buffer and store response
 		$result = $this->Request($defaults['accessToken'], 'updates/create.json', 'post', $params);
+		// update_post_meta($postID, $this->plugin->name.'-request', '<pre>'.print_r($params,true).'</pre>');
 		update_post_meta($postID, $this->plugin->name.'-log', $result);
+		
     }
 	
 	/**
@@ -269,104 +317,57 @@ class WPToBuffer {
     function AdminPanel() {
         // Save Settings
         if (isset($_POST['submit'])) {
-            update_option($this->plugin->name, $_POST[$this->plugin->name]);
-            $this->message = __('Settings Updated.'); 
+        	// Check the access token, in case it hasn't been copied / pasted correctly
+        	// This happens when you double click the Access Token on http://bufferapp.com/developers/apps, which doesn't
+        	// quite select the entire access token
+        	$tokenLength = strlen($_POST[$this->plugin->name]['accessToken']);
+        	if ($tokenLength > 0) {
+        		// Check if token is missing 1/ at the start
+        		if (substr($_POST[$this->plugin->name]['accessToken'], 0, 2) != '1/') {
+        			// Missing
+        			$this->errorMessage = __('Oops - you\'ve not quite copied your access token from Buffer correctly. It should start with 1/. Please try again.');
+        		} elseif (substr($_POST[$this->plugin->name]['accessToken'], $tokenLength-4, 4) == 'Edit') {
+        			$this->errorMessage = __('Oops - you\'ve not quite copied your access token from Buffer correctly. It should not end with the word Edit. Please try again.');
+        		}
+        	} else {
+        		$this->errorMessage = __('Please enter an access token to use this plugin. You can obtain one by following the instructions below.');
+        	}
+        	
+        	// Test access token to make sure it's valid
+        	if (!isset($this->errorMessage)) {
+        		$user = $this->Request($_POST[$this->plugin->name]['accessToken'], 'user.json');
+        		if (!is_object($user)) {
+        			$this->errorMessage = $user;
+        		} else {
+        			// Ok - save
+        			update_option($this->plugin->name, $_POST[$this->plugin->name]);
+            		$this->message = __('Settings Updated.');
+        		}	
+            }
+        }
+        
+        // Disconnect?
+        if (isset($_GET['disconnect'])) {
+        	$this->settings = get_option($this->plugin->name);
+        	$this->settings['accessToken'] = '';
+        	update_option($this->plugin->name, $this->settings);	
         }
         
         // Get latest settings
         $this->settings = get_option($this->plugin->name);
-
-        // Check if we have an error message from Buffer
-        if (isset($_GET['error'])) {
-        	switch ($_GET['error']) {
-        		case 'invalid_client':
-        			$this->errorMessage = __('The Client ID specified is invalid.  Please change this, Save settings and click the Connect to Buffer API button.');
-        			break;
-        		case 'redirect_uri_mismatch':
-        			$this->errorMessage = __('The redirect URI specified by this plugin does not match the redirect URI specified for the application.');
-        			$this->errorMessage .= '<br />';
-        			$this->errorMessage = __('Check that the Callback URL for application at <a href="http://bufferapp.com/developers/apps/" target="_blank">http://bufferapp.com/developers/apps/</a> is set to '.$this->plugin->settingsUrl);
-        			break;
-        	}
-        }
         
-        // If we have a client ID and client secret, attempt to authenticate with the Buffer API
-        if ($this->settings['clientID'] != '' AND $this->settings['clientSecret'] != '') $this->BufferAPIAuth();
-        
-        // If we have an access token, get the user's profile listing their accounts
+        // If we have an access token, try to get the user's profile listing their accounts
         if ($this->settings['accessToken'] != '') {
-        	$this->buffer->accounts = $this->Request($this->settings['accessToken'], 'profiles.json');
+        	$profiles = $this->Request($this->settings['accessToken'], 'profiles.json');
+        	if (is_wp_error($profiles)) {
+        		$this->errorMessage = $profiles->get_error_message().'. '.__('Some functionality on this screen may not work correctly.');
+        	} else {
+        		$this->buffer->accounts = $profiles;
+        	}
         }
         
         // Load form
         include_once(WP_PLUGIN_DIR.'/'.$this->plugin->name.'/admin/settings.php');  
-    }
-    
-    /**
-    * Goes through the oAuth 2 authentication process for the Buffer API
-    *
-    * Only called if a client ID and client secret have been specified in the Settings screen
-    */
-    function BufferAPIAuth() {
-    	// If a request to revoke access has been sent, delete the access token
-    	if (isset($_GET['revoke']) AND $_GET['revoke'] == 1) {
-    		$this->settings['accessToken'] = '';
-    		update_option($this->plugin->name, $this->settings['accessToken']);
-    		$this->authUrl = $this->BufferAPIAuthURL();
-    	}
-    
-    	// If back from Buffer and have a code, convert it to an access token
-		if (isset($_GET['code']) AND isset($_GET['state'])) {
-			// Swap our Authorisation Code / Token for an Access Token and Refresh Token
-			$result = wp_remote_post('https://api.bufferapp.com/1/oauth2/token.json', array(
-				'body' => array(
-					'client_id' => $this->settings['clientID'],
-					'client_secret' => $this->settings['clientSecret'],
-					'redirect_uri' => $this->plugin->settingsUrl,
-					'code' => $_GET['code'],
-					'grant_type' => 'authorization_code'
-				),
-				'sslverify' => false
-			));
-			
-			// Check the request is valid
-			if (is_wp_error($result)) {
-				$this->errorMessage = $result->get_error_message();
-				return false;	
-			}
-			
-			if ($result['response']['code'] != 200) {
-				$this->errorMessage = 'Error '.$result['response']['code'].' whilst trying to authenticate: '.$result['response']['message'].'. Please try again.';
-				$this->authUrl = $this->BufferAPIAuthURL();
-				return false;
-			}
-			
-			// Check the body contains an access token
-			$body = json_decode($result['body']);
-			
-			if (!is_object($body) OR $body->access_token == '') {
-				$this->errorMessage = __('An error occurred whilst trying to authenticate. Please try again.');
-				$this->authUrl = $this->BufferAPIAuthURL();
-				return false;	
-			}
-			
-			// If here, we have an access token
-			// Store it and check it works
-			$this->settings['accessToken'] = $body->access_token;			
-			update_option($this->plugin->name, $this->settings);
-		} else {
-			// Create auth URL for button in Settings screen
-    		$this->authUrl = $this->BufferAPIAuthURL();
-    	}
-    }
-    
-    /**
-    * Returns the URL for the Connect to Buffer API button, to begin the authorization process
-    *
-    * @return string Buffer Authorization URL
-    */
-    function BufferAPIAuthURL() {
-    	return 'https://bufferapp.com/oauth2/authorize?client_id='.$this->settings['clientID'].'&response_type=code&redirect_uri='.urlencode($this->plugin->settingsUrl);
     }
     
     /**
@@ -399,7 +400,7 @@ class WPToBuffer {
 		}
     	
     	// Check the request is valid
-    	if (is_wp_error($result)) return $result->get_error_message();
+    	if (is_wp_error($result)) return $result;
 		if ($result['response']['code'] != 200) return 'Error '.$result['response']['code'].' whilst trying to authenticate: '.$result['response']['message'].'. Please try again.';
 
 		return json_decode($result['body']);		

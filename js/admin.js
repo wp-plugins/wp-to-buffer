@@ -19,7 +19,6 @@ jQuery(document).ready(function($) {
 		
 		// Dim any account images where no corresponding checkbox is ticked
 		$('div.buffer-account input[type=checkbox]').each(function(i) {
-			console.log('Checking account');
 			if (!$(this).attr('checked')) {
 				$('img', $(this).parent()).fadeTo('fast', 0.4);
 			}
@@ -27,7 +26,6 @@ jQuery(document).ready(function($) {
 		
 		// On checkbox change, show / dim corresponding account image
 		$('div.buffer-account input[type=checkbox]').change(function() {
-			console.log('Checking account');
 			if (!$(this).attr('checked')) {
 				$('img', $(this).parent()).fadeTo('fast', 0.4);
 			} else {
