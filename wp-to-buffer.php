@@ -2,7 +2,7 @@
 /**
 * Plugin Name: WP to Buffer
 * Plugin URI: http://www.wpcube.co.uk/plugins/wp-to-buffer-pro/ 
-* Version: 2.0
+* Version: 2.0.1
 * Author: <a href="http://www.n7studios.co.uk">n7 Studios</a>, <a href="http://www.wpcube.co.uk">WP Cube</a>
 * Description: Send WordPress Pages, Posts or Custom Post Types to your bufferapp.com account for scheduled publishing to social networks.
 * License: GPL2
@@ -30,7 +30,7 @@
 * @package WordPress
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 2.0
+* @version 2.0.1
 * @copyright n7 Studios
 */
 class WPToBuffer {

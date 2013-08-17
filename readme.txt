@@ -1,7 +1,7 @@
 === WP to Buffer ===
 Contributors: n7studios,wpcube
 Donate link: http://www.wpcube.co.uk/plugins/wp-to-buffer/
-Tags: buffer,bufferapp,schedule,twitter,facebook,post
+Tags: buffer,bufferapp,schedule,twitter,facebook,linkedin,google,social,media,sharing,post
 Requires at least: 3.0
 Tested up to: 3.6
 Stable tag: trunk
@@ -38,6 +38,10 @@ When creating or editing a Page, Post or Custom Post Type, sending the update to
 4. Post level settings meta box.
 
 == Changelog ==
+
+= 2.0.1 =
+* Fix: Removed console.log messages
+* Fix: Added Google+ icon for Buffer accounts linked to Google+ Pages
 
 = 2.0 =
 * Fix: admin_enqueue_scripts used to prevent 3.6+ JS errors
