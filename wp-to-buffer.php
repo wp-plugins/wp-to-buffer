@@ -1,14 +1,15 @@
 <?php
 /**
 * Plugin Name: WP to Buffer
-* Plugin URI: http://www.wpcube.co.uk/plugins/wp-to-buffer-pro/ 
-* Version: 2.0.1
-* Author: <a href="http://www.n7studios.co.uk">n7 Studios</a>, <a href="http://www.wpcube.co.uk">WP Cube</a>
-* Description: Send WordPress Pages, Posts or Custom Post Types to your bufferapp.com account for scheduled publishing to social networks.
+* Plugin URI: http://www.wpcube.co.uk/plugins/wp-to-buffer
+* Version: 2.1
+* Author: WP Cube
+* Author URI: http://www.wpcube.co.uk
+* Description: Send WordPress Pages, Posts or Custom Post Types to your Buffer (bufferapp.com) account for scheduled publishing to social networks.
 * License: GPL2
 */
 
-/*  Copyright 2013 n7 Studios, WP Cube (email : tim@n7studios.co.uk)
+/*  Copyright 2013 WP Cube (email : support@wpcube.co.uk)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License, version 2, as 
@@ -27,11 +28,11 @@
 /**
 * WP to Buffer Class
 * 
-* @package WordPress
+* @package WP Cube
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 2.0.1
-* @copyright n7 Studios
+* @version 2.1
+* @copyright WP Cube
 */
 class WPToBuffer {
     /**
@@ -40,51 +41,57 @@ class WPToBuffer {
     function WPToBuffer() {
         // Plugin Details
         $this->plugin = new stdClass;
-        $this->plugin->name = 'wp-to-buffer';
-        $this->plugin->displayName = 'WP to Buffer';
+        $this->plugin->name = 'wp-to-buffer'; // Plugin Folder
+        $this->plugin->displayName = 'WP to Buffer'; // Plugin Name
+        $this->plugin->version = 2.1;
+        $this->plugin->folder = WP_PLUGIN_DIR.'/'.$this->plugin->name; // Full Path to Plugin Folder
         $this->plugin->url = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
-        $this->plugin->settingsUrl = get_bloginfo('url').'/wp-admin/admin.php?page='.$this->plugin->name; 
+		$this->plugin->settingsUrl = get_bloginfo('url').'/wp-admin/admin.php?page='.$this->plugin->name; 
         $this->plugin->ignorePostTypes = array('attachment','revision','nav_menu_item');      
 		$this->plugin->publishDefaultString = 'New Post: {title} {url}';
 		$this->plugin->updateDefaultString = 'Updated Post: {title} {url}';
-
+		
+        // Dashboard Submodule
+        if (!class_exists('WPCubeDashboardWidget')) {
+			require_once($this->plugin->folder.'/_modules/dashboard/dashboard.php');
+		}
+		$dashboard = new WPCubeDashboardWidget($this->plugin); 
+		
 		// Publish Actions for chosen post types
 		$settings = get_option($this->plugin->name);
-		if (is_array($settings['enabled'])) {
+		if (isset($settings) AND isset($settings['enabled']) AND is_array($settings['enabled'])) {
 			foreach ($settings['enabled'] as $type=>$opts) {
 				add_action('publish_'.$type, array(&$this, 'PublishToBufferNow'));
 				add_action('publish_future_'.$type, array(&$this, 'PublishToBufferFuture'));
 				add_action('xmlrpc_publish_'.$type, array(&$this, 'PublishToBufferXMLRPC'));	
 			}
 		}
-	
-        if (is_admin()) {
-            add_action('admin_enqueue_scripts', array(&$this, 'AdminScriptsAndCSS'));
-            add_action('admin_menu', array(&$this, 'AddAdminPanelsAndMetaBoxes'));
-            add_action('admin_notices', array(&$this, 'AdminNotices'));
-            add_action('save_post', array(&$this, 'Save'));  
-        }
+		
+		// Hooks
+        add_action('admin_enqueue_scripts', array(&$this, 'adminScriptsAndCSS'));
+        add_action('admin_menu', array(&$this, 'adminPanelsAndMetaBoxes'));
+        add_action('admin_notices', array(&$this, 'AdminNotices'));
+        add_action('save_post', array(&$this, 'Save')); 
     }
     
     /**
     * Register and enqueue any JS and CSS for the WordPress Administration
     */
-    function AdminScriptsAndCSS() {
+    function adminScriptsAndCSS() {
     	// JS
-    	wp_enqueue_script($this->plugin->name.'-admin-js', $this->plugin->url.'js/admin.js');
+    	wp_enqueue_script($this->plugin->name.'-admin', $this->plugin->url.'js/admin.js', array('jquery'), $this->plugin->version, true);
     	        
     	// CSS
-        wp_enqueue_style($this->plugin->name.'-admin-css', $this->plugin->url.'css/admin.css'); 
+        wp_enqueue_style($this->plugin->name.'-admin', $this->plugin->url.'css/admin.css', array(), $this->plugin->version); 
     }
     
     /**
-    * Adds a single option panel to the WordPress Administration, as well as meta
-    * box for every Post Types, apart from the ignored ones specified.
+    * Register the plugin settings panel
     */
-    function AddAdminPanelsAndMetaBoxes() {
-        add_menu_page($this->plugin->displayName, $this->plugin->displayName, 9, $this->plugin->name, array(&$this, 'AdminPanel'), $this->plugin->url.'images/icons/small.png');
-        
-        // Go through all Post Types, adding a meta box for each
+    function adminPanelsAndMetaBoxes() {
+        add_menu_page($this->plugin->displayName, $this->plugin->displayName, 'manage_options', $this->plugin->name, array(&$this, 'adminPanel'), $this->plugin->url.'images/icons/small.png');
+    	
+    	// Go through all Post Types, adding a meta box for each
     	$types = get_post_types('', 'names');
     	foreach ($types as $key=>$type) {
     		if (in_array($type, $this->plugin->ignorePostTypes)) continue; // Skip ignored Post Types
@@ -95,15 +102,15 @@ class WPToBuffer {
     /**
     * Deferred init for adding publish actions after all Custom Post Types are registered
     */
-    function AddPublishActions() {
+    function addPublishActions() {
 		// Publishing Hooks for each Post Type
         $types = get_post_types('', 'names');
     	foreach ($types as $key=>$type) {
     		if (in_array($type, $this->plugin->ignorePostTypes)) continue; // Skip ignored Post Types
     		
-    		add_action('publish_'.$type, array(&$this, 'PublishToBufferNow'));
-			add_action('publish_future_'.$type, array(&$this, 'PublishToBufferFuture'));
-			add_action('xmlrpc_publish_'.$type, array(&$this, 'PublishToBufferXMLRPC'));
+    		add_action('publish_'.$type, array(&$this, 'publishToBufferNow'));
+			add_action('publish_future_'.$type, array(&$this, 'publishToBufferFuture'));
+			add_action('xmlrpc_publish_'.$type, array(&$this, 'publishToBufferXMLRPC'));
 		}
     }
     
@@ -112,8 +119,8 @@ class WPToBuffer {
     * - Buffer hasn't authenticated i.e. we do not have an access token
     * - A Post has been sent to Buffer and we have a valid message response
     */
-    function AdminNotices() {
-        if ($_GET['page'] == $this->plugin->name) return false; // Don't check on plugin main page
+    function adminNotices() {
+        if (isset($_GET['page']) AND $_GET['page'] == $this->plugin->name) return false; // Don't check on plugin main page
         $this->settings = get_option($this->plugin->name); // Get settings
         
         // Check if no access token
@@ -133,10 +140,10 @@ class WPToBuffer {
         }
     } 
     
-    /**
+	/**
     * Displays Buffer Fields
     */
-    function DisplayBufferFields() {
+    function displayBufferFields() {
 		global $post;
         
         $meta = get_post_meta($post->ID, $this->plugin->name, true); // Get post meta
@@ -144,18 +151,20 @@ class WPToBuffer {
         $defaults = get_option($this->plugin->name); // Get settings
         if ($defaults['accessToken'] != '') $accounts = $this->Request($defaults['accessToken'], 'profiles.json'); // Get buffer profiles
         
+        //echo ('Defaults: <pre>'.print_r($defaults,true).'</pre>');
+        
         // Output fields
         echo (' <div class="'.$this->plugin->name.'-meta-box">
                     <input type="hidden" name="'.$this->plugin->name.'_wpnonce" id="theme_wpnonce" value="'.wp_create_nonce(plugin_basename(__FILE__)).'" /> 
                     
                     <p>
-                    	Yes <input type="radio" name="'.$this->plugin->name.'[publish]" value="1"'.(!is_array($meta) ? ($defaults['enabled'][$post->post_type]['publish'] == '1' ? ' checked' : '') : ($meta['publish'] == '1' ? ' checked' : '')).' />
-                    	No <input type="radio" name="'.$this->plugin->name.'[publish]" value="0"'.(!is_array($meta) ? ($defaults['enabled'][$post->post_type]['publish'] != '1' ? ' checked' : '') : ($meta['publish'] != '1' ? ' checked' : '')).' />
+                    	Yes <input type="radio" name="'.$this->plugin->name.'[publish]" value="1"'.(!is_array($meta) ? (isset($defaults['enabled'][$post->post_type]['publish']) ? ' checked' : '') : ($meta['publish'] == '1' ? ' checked' : '')).' />
+                    	No <input type="radio" name="'.$this->plugin->name.'[publish]" value="0"'.(!is_array($meta) ? (!isset($defaults['enabled'][$post->post_type]['publish']) ? ' checked' : '') : ($meta['publish'] != '1' ? ' checked' : '')).' />
                 	</p>
                 	<p class="notes">
                 		'.$this->plugin->displayName.' will update Buffer<br />
-                		- on Publish: '.($defaults['enabled'][$post->post_type]['publish'] == '1' ? __('Yes') : __('No')).'<br />
-                		- on Update: '.($defaults['enabled'][$post->post_type]['update'] == '1' ? __('Yes') : __('No')).'<br />
+                		- on Publish: '.(isset($defaults['enabled'][$post->post_type]['publish']) ? __('Yes') : __('No')).'<br />
+                		- on Update: '.(isset($defaults['enabled'][$post->post_type]['update']) ? __('Yes') : __('No')).'<br />
                 		To change these options, edit your defaults.<br /><br />
                 		<a href="admin.php?page='.$this->plugin->name.'" target="_blank" class="button">Edit Defaults</a>
                 	</p>
@@ -167,8 +176,8 @@ class WPToBuffer {
     *
     * @param int $post_id Post ID
     */
-    function Save($post_id) {
-        if (!wp_verify_nonce($_POST[$this->plugin->name.'_wpnonce'], plugin_basename(__FILE__))) return $post_id;
+    function save($post_id) {
+        if (!isset($_POST[$this->plugin->name.'_wpnonce']) OR !wp_verify_nonce($_POST[$this->plugin->name.'_wpnonce'], plugin_basename(__FILE__))) return $post_id;
         if (!current_user_can('edit_post', $post_id)) return $post_id;
         if (count($_POST[$this->plugin->name]) > 0) {
         	update_post_meta($post_id, $this->plugin->name, $_POST[$this->plugin->name]);    
@@ -184,8 +193,8 @@ class WPToBuffer {
     *
     * @param int $postID Post ID
     */
-    function PublishToBufferNow($postID) {
-    	$this->Publish($postID);
+    function publishToBufferNow($postID) {
+    	$this->publish($postID);
     }
     
     /**
@@ -196,8 +205,8 @@ class WPToBuffer {
     *
     * @param int $postID Post ID
     */
-    function PublishToBufferFuture($postID) {
-    	$this->Publish($postID, true);
+    function publishToBufferFuture($postID) {
+    	$this->publish($postID, true);
     }
     
     /**
@@ -207,8 +216,8 @@ class WPToBuffer {
     *
     * @param int $postID Post ID
     */
-    function PublishToBufferXMLRPC($postID) {
-    	$this->Publish($postID, true);	
+    function publishToBufferXMLRPC($postID) {
+    	$this->publish($postID, true);	
     }
     
     /**
@@ -216,7 +225,7 @@ class WPToBuffer {
     *
     * @param int $postID Post ID
     */
-    function Publish($postID, $isPublishAction = false) {
+    function publish($postID, $isPublishAction = false) {
     	$meta = get_post_meta($postID, $this->plugin->name, true); // Get post meta
         $defaults = get_option($this->plugin->name); // Get settings
         
@@ -259,39 +268,47 @@ class WPToBuffer {
 		// 2. Get author
 		$author = get_user_by('id', $post->post_author);
 		
+		// 3. Check if we have an excerpt. If we don't (i.e. it's a Page or CPT with no excerpt functionality), we need
+		// to create an excerpt
+		if (empty($post->post_excerpt)) {
+			$excerpt = wp_trim_words(strip_shortcodes($post->post_content));
+		} else {
+			$excerpt = $post->post_excerpt;
+		}
+		
 		// 4. Parse text and description
 		$params['text'] = $defaults['message'][$post->post_type][$updateType];
 		$params['text'] = str_replace('{sitename}', get_bloginfo('name'), $params['text']);
 		$params['text'] = str_replace('{title}', $post->post_title, $params['text']);
-		$params['text'] = str_replace('{excerpt}', $post->post_excerpt, $params['text']);
+		$params['text'] = str_replace('{excerpt}', $excerpt, $params['text']);
 		$params['text'] = str_replace('{category}', trim($catNames), $params['text']);
 		$params['text'] = str_replace('{date}', date('dS F Y', strtotime($post->post_date)), $params['text']);
-		$params['text'] = str_replace('{url}', get_permalink($postID), $params['text']);
+		$params['text'] = str_replace('{url}', rtrim(get_permalink($post->ID), '/'), $params['text']);
 		$params['text'] = str_replace('{author}', $author->display_name, $params['text']);
 		
 		// 5. Check if we can include the Featured Image (if available) in the media
 		$featuredImageID = get_post_thumbnail_id($postID);
 		if ($featuredImageID > 0) {
-			// Get image source and attachment post
-			$featuredImageSrc = wp_get_attachment_image_src($featuredImageID, 'medium');
+			// Get image source
+			$featuredImageSrc = wp_get_attachment_image_src($featuredImageID);
+			$image['link'] = $featuredImageSrc[0];
+			
+			// Get image attachment, so we can get the description and title
 			$attachment = new WP_Query(array(
 				'p' => $featuredImageID,
-				'post_parent' => $post->ID,
-				'post_status' => 'inherit',
 				'post_type' => 'attachment',
-				'post_mime_type' => 'image'
+				'post_mime_type' => 'image',
+				'posts_per_page' => 1,
 			));
-			
-			// Build link, title and description of the image
 			if (count($attachment->posts) > 0) {
-				$image['link'] = $featuredImageSrc[0];
-				$image['title'] = $attachment->posts[0]->post_title;
-				if ($attachment->posts[0]->post_content != '') {
-					$image['description'] = $attachment->posts[0]->post_content;
-				} elseif ($attachment->posts[0]->post_excerpt != '') {
-					$image['description'] = $attachment->posts[0]->post_excerpt;
+				$image['title'] = $attachment->post->post_title;
+				
+				if (!empty($attachment->post->post_content)) {
+					$image['description'] = $attachment->post->post_content;
+				} elseif (!empty($attachment->post->post_excerpt)) {
+					$image['description'] = $attachment->post->post_excerpt;
 				} else {
-					$image['description'] = $attachment->posts[0]->post_title;
+					$image['description'] = $attachment->post->post_title;
 				}
 			}
 			
@@ -305,16 +322,16 @@ class WPToBuffer {
 		}
 		
 		// 7. Send to Buffer and store response
-		$result = $this->Request($defaults['accessToken'], 'updates/create.json', 'post', $params);
+		$result = $this->request($defaults['accessToken'], 'updates/create.json', 'post', $params);
 		// update_post_meta($postID, $this->plugin->name.'-request', '<pre>'.print_r($params,true).'</pre>');
-		update_post_meta($postID, $this->plugin->name.'-log', $result);
-		
+		update_post_meta($postID, $this->plugin->name.'-log', $result);	
     }
-	
+    
 	/**
-    * Outputs the plugin Admin Panel in Wordpress Admin
+    * Output the Administration Panel
+    * Save POSTed data from the Administration Panel into a WordPress option
     */
-    function AdminPanel() {
+    function adminPanel() {
         // Save Settings
         if (isset($_POST['submit'])) {
         	// Check the access token, in case it hasn't been copied / pasted correctly
@@ -357,6 +374,7 @@ class WPToBuffer {
         $this->settings = get_option($this->plugin->name);
         
         // If we have an access token, try to get the user's profile listing their accounts
+        $this->buffer = new stdClass;
         if ($this->settings['accessToken'] != '') {
         	$profiles = $this->Request($this->settings['accessToken'], 'profiles.json');
         	if (is_wp_error($profiles)) {
@@ -366,8 +384,8 @@ class WPToBuffer {
         	}
         }
         
-        // Load form
-        include_once(WP_PLUGIN_DIR.'/'.$this->plugin->name.'/admin/settings.php');  
+		// Load Settings Form
+        include_once(WP_PLUGIN_DIR.'/'.$this->plugin->name.'/views/settings.php');  
     }
     
     /**
@@ -379,9 +397,9 @@ class WPToBuffer {
     * @param array $params Parameters (optional)
     * @return mixed JSON decoded object or error string
     */
-    function Request($accessToken, $cmd, $method = 'get', $params = array()) {
+    function request($accessToken, $cmd, $method = 'get', $params = array()) {
     	// Check for access token
-    	if ($accessToken == '') return 'Invalid access token';
+    	if ($accessToken == '') return __('Invalid access token', $this->plugin->name);
 		
 		// Send request
 		switch ($method) {
