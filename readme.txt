@@ -64,6 +64,9 @@ Find out more about us:
 
 == Changelog ==
 
+= 2.1.1 =
+* Fix: Some assets missing from SVN checkin on 2.1
+
 = 2.1 =
 * Fix: 'Creating default object from empty value' warning
 * Fix: {excerpt} tag working on Pages and Custom Post Types that do not have an Excerpt field
