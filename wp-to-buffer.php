@@ -31,7 +31,7 @@
 * @package WP Cube
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 2.1.1
+* @version 2.1.2
 * @copyright WP Cube
 */
 class WPToBuffer {
@@ -43,7 +43,7 @@ class WPToBuffer {
         $this->plugin = new stdClass;
         $this->plugin->name = 'wp-to-buffer'; // Plugin Folder
         $this->plugin->displayName = 'WP to Buffer'; // Plugin Name
-        $this->plugin->version = '2.1.1';
+        $this->plugin->version = '2.1.2';
         $this->plugin->folder = WP_PLUGIN_DIR.'/'.$this->plugin->name; // Full Path to Plugin Folder
         $this->plugin->url = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
 		$this->plugin->settingsUrl = get_bloginfo('url').'/wp-admin/admin.php?page='.$this->plugin->name; 
@@ -150,9 +150,7 @@ class WPToBuffer {
         $log = get_post_meta($post->ID, $this->plugin->name.'-log', true); // Get post meta log
         $defaults = get_option($this->plugin->name); // Get settings
         if ($defaults['accessToken'] != '') $accounts = $this->Request($defaults['accessToken'], 'profiles.json'); // Get buffer profiles
-        
-        //echo ('Defaults: <pre>'.print_r($defaults,true).'</pre>');
-        
+
         // Output fields
         echo (' <div class="'.$this->plugin->name.'-meta-box">
                     <input type="hidden" name="'.$this->plugin->name.'_wpnonce" id="theme_wpnonce" value="'.wp_create_nonce(plugin_basename(__FILE__)).'" /> 
@@ -323,7 +321,7 @@ class WPToBuffer {
 		
 		// 7. Send to Buffer and store response
 		$result = $this->request($defaults['accessToken'], 'updates/create.json', 'post', $params);
-		// update_post_meta($postID, $this->plugin->name.'-request', '<pre>'.print_r($params,true).'</pre>');
+		update_post_meta($postID, $this->plugin->name.'-request', print_r($params,true));
 		update_post_meta($postID, $this->plugin->name.'-log', $result);	
     }
     

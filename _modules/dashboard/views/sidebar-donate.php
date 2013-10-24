@@ -20,12 +20,11 @@
 				<input type="hidden" name="hosted_button_id" value="RBAHE4QWKJX3N">
 				<input type="hidden" name="on0" value="Donation">
 				<select name="os0">
-					<option value="5">$5</option>
-					<option value="10">$10</option>
-					<option value="15">$15</option>
-					<option value="20">$20</option>
-					<option value="30">$30</option>
-					<option value="50">$50</option>
+					<option value="$10">$10</option>
+					<option value="$15">$15</option>
+					<option value="$20">$20</option>
+					<option value="$30">$30</option>
+					<option value="$50">$50</option>
 				</select> 
 				<input type="hidden" name="currency_code" value="USD">
 				<input type="submit" name="donate" value="<?php _e('Donate Now', $this->plugin->name); ?>" class="button button-primary" />

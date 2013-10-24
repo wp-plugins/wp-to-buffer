@@ -64,6 +64,9 @@ Find out more about us:
 
 == Changelog ==
 
+= 2.1.2 =
+* Fix: Donation Form
+
 = 2.1.1 =
 * Fix: Some assets missing from SVN checkin on 2.1
 
