@@ -2,7 +2,7 @@
 /**
 * Plugin Name: WP to Buffer
 * Plugin URI: http://www.wpcube.co.uk/plugins/wp-to-buffer
-* Version: 2.1.1
+* Version: 2.1.3
 * Author: WP Cube
 * Author URI: http://www.wpcube.co.uk
 * Description: Send WordPress Pages, Posts or Custom Post Types to your Buffer (bufferapp.com) account for scheduled publishing to social networks.
@@ -31,7 +31,7 @@
 * @package WP Cube
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 2.1.2
+* @version 2.1.3
 * @copyright WP Cube
 */
 class WPToBuffer {
@@ -289,29 +289,14 @@ class WPToBuffer {
 		if ($featuredImageID > 0) {
 			// Get image source
 			$featuredImageSrc = wp_get_attachment_image_src($featuredImageID);
-			$image['link'] = $featuredImageSrc[0];
-			
-			// Get image attachment, so we can get the description and title
-			$attachment = new WP_Query(array(
-				'p' => $featuredImageID,
-				'post_type' => 'attachment',
-				'post_mime_type' => 'image',
-				'posts_per_page' => 1,
-			));
-			if (count($attachment->posts) > 0) {
-				$image['title'] = $attachment->post->post_title;
+			if (is_array($featuredImageSrc)) {
+				$image['picture'] = $featuredImageSrc[0];
+				$image['link'] = rtrim(get_permalink($post->ID), '/');
+				$image['description'] = $post->post_title;
 				
-				if (!empty($attachment->post->post_content)) {
-					$image['description'] = $attachment->post->post_content;
-				} elseif (!empty($attachment->post->post_excerpt)) {
-					$image['description'] = $attachment->post->post_excerpt;
-				} else {
-					$image['description'] = $attachment->post->post_title;
-				}
+				// Assign image array to media argument
+				$params['media'] = $image;
 			}
-			
-			// Assign image array to media argument
-			$params['media'] = $image;
 		}
 
 		// 6. Add profile IDs
