@@ -70,12 +70,16 @@ class WPCubeDashboardWidget {
     */
     function outputDashboardWidget() {
     	$result = wp_remote_get('http://www.wpcube.co.uk/feed/?post_type=lum-product');
-    	if ($result['response']['code'] == 200) {
-    		$xml = simplexml_load_string($result['body']);
-    		$products = $xml->channel;
+    	if (!is_wp_error($result)) {
+	    	if ($result['response']['code'] == 200) {
+	    		$xml = simplexml_load_string($result['body']);
+	    		$products = $xml->channel;
+	    	}
+	    	
+	    	include_once(WP_PLUGIN_DIR.'/'.$this->dashboard->name.'/_modules/dashboard/views/dashboard.php');
+    	} else {
+    		include_once(WP_PLUGIN_DIR.'/'.$this->dashboard->name.'/_modules/dashboard/views/dashboard-nodata.php');
     	}
-    	
-    	include_once(WP_PLUGIN_DIR.'/'.$this->dashboard->name.'/_modules/dashboard/views/dashboard.php');
     }
 }
 ?>

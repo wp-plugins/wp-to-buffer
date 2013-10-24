@@ -4,11 +4,11 @@
 *
 * Included in all WP Cube plugins by default, it outputs 
 * 
-* @package WordPress
-* @subpackage Like Lock
+* @package WP Cube
+* @subpackage Dashboard
 * @author Tim Carr
 * @version 1.0
-* @copyright n7 Studios
+* @copyright WP Cube
 */
 
 if (is_object($products)) {

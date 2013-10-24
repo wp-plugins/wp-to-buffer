@@ -64,6 +64,9 @@ Find out more about us:
 
 == Changelog ==
 
+= 2.1.4 =
+* Fix: Dashboard: PHP fatal error
+
 = 2.1.3 =
 * Fix: Posts with an image no longer show the image link, but instead show the Page / Post URL
 
