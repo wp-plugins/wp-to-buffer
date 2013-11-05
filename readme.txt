@@ -1,6 +1,6 @@
 === WP to Buffer ===
 Contributors: n7studios,wpcube
-Donate link: http://www.wpcube.co.uk/plugins/wp-to-buffer
+Donate link: http://www.wpcube.co.uk/plugins/wp-to-buffer-pro
 Tags: buffer,bufferapp,schedule,twitter,facebook,linkedin,google,social,media,sharing,post
 Requires at least: 3.6
 Tested up to: 3.7
@@ -63,6 +63,11 @@ Find out more about us:
 4. Post level settings meta box.
 
 == Changelog ==
+
+= 2.1.5 =
+* Fix: Don't show success message when Post/Page not posted to Buffer
+* Fix: Removed Post to Buffer meta box, which wasn't honouring settings / causing double postings
+* Settings: changed to tabbed interface
 
 = 2.1.4 =
 * Fix: Dashboard: PHP fatal error

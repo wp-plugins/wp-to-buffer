@@ -1,8 +1,8 @@
 <?php
 /**
 * Plugin Name: WP to Buffer
-* Plugin URI: http://www.wpcube.co.uk/plugins/wp-to-buffer
-* Version: 2.1.4
+* Plugin URI: http://www.wpcube.co.uk/plugins/wp-to-buffer-pro
+* Version: 2.1.5
 * Author: WP Cube
 * Author URI: http://www.wpcube.co.uk
 * Description: Send WordPress Pages, Posts or Custom Post Types to your Buffer (bufferapp.com) account for scheduled publishing to social networks.
@@ -31,7 +31,7 @@
 * @package WP Cube
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 2.1.4
+* @version 2.1.5
 * @copyright WP Cube
 */
 class WPToBuffer {
@@ -46,8 +46,14 @@ class WPToBuffer {
         $this->plugin->version = '2.1.4';
         $this->plugin->folder = WP_PLUGIN_DIR.'/'.$this->plugin->name; // Full Path to Plugin Folder
         $this->plugin->url = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
-		$this->plugin->settingsUrl = get_bloginfo('url').'/wp-admin/admin.php?page='.$this->plugin->name; 
-        $this->plugin->ignorePostTypes = array('attachment','revision','nav_menu_item');      
+        $this->plugin->upgradeReasons = array(
+        	array(__('Send Immediately'), __('Choose to send Posts, Pages and Custom Post Types immediately through your Buffer account.')),
+        	array(__('Taxonomy Level Filtering'), __('Advanced controls to only publish Posts, Pages and/or Custom Post Types that match Taxonomy Term(s).')),
+        	array(__('Analytics'), __('Per-post analytics, allowing you to quickly see the reach, clicks and shares of your Post.')),
+        );
+        $this->plugin->upgradeURL = 'http://www.wpcube.co.uk/plugins/wp-to-buffer-pro';
+        
+		$this->plugin->ignorePostTypes = array('attachment','revision','nav_menu_item');      
 		$this->plugin->publishDefaultString = 'New Post: {title} {url}';
 		$this->plugin->updateDefaultString = 'Updated Post: {title} {url}';
 		
@@ -70,8 +76,7 @@ class WPToBuffer {
 		// Hooks
         add_action('admin_enqueue_scripts', array(&$this, 'adminScriptsAndCSS'));
         add_action('admin_menu', array(&$this, 'adminPanelsAndMetaBoxes'));
-        add_action('admin_notices', array(&$this, 'AdminNotices'));
-        add_action('save_post', array(&$this, 'Save')); 
+        add_action('admin_notices', array(&$this, 'AdminNotices')); 
     }
     
     /**
@@ -90,13 +95,6 @@ class WPToBuffer {
     */
     function adminPanelsAndMetaBoxes() {
         add_menu_page($this->plugin->displayName, $this->plugin->displayName, 'manage_options', $this->plugin->name, array(&$this, 'adminPanel'), $this->plugin->url.'images/icons/small.png');
-    	
-    	// Go through all Post Types, adding a meta box for each
-    	$types = get_post_types('', 'names');
-    	foreach ($types as $key=>$type) {
-    		if (in_array($type, $this->plugin->ignorePostTypes)) continue; // Skip ignored Post Types
-    		add_meta_box($this->plugin->name.'-fields', 'Post to Buffer', array(&$this, 'DisplayBufferFields'), $type, 'side', 'low');
-    	}
     }
     
     /**
@@ -130,59 +128,21 @@ class WPToBuffer {
             return false;	
         }
         
-        // Check if post published or updated and we have a response from Buffer
+        // Output success and/or error messages if we are on a post and it has a meta key
         if (isset($_GET['message']) AND isset($_GET['post'])) {
-        	$log = get_post_meta($_GET['post'], $this->plugin->name.'-log', true);
-        	if (is_object($log) AND $log->message != '') {
-        		echo (' <div class="updated"><p>'.$log->message.'</p></div>');
-            	return false;	
+        	$success = get_post_meta($_GET['post'], $this->plugin->settingsName.'-success', true);
+        	if ($success == 1) {
+        		echo (' <div class="updated success"><p>'.__('Post added to Buffer successfully', $this->plugin->name).'</p></div>');
+        		delete_post_meta($_GET['post'], $this->plugin->settingsName.'-success');	
+        	}
+        	
+        	$error = get_post_meta($_GET['post'], $this->plugin->settingsName.'-error', true);
+        	if ($error == 1) {
+        		echo (' <div class="error"><p>'.__('Could not add Post to Buffer due to an API error. Please manually publish to Buffer', $this->plugin->name).'</p></div>');
+        		delete_post_meta($_GET['post'], $this->plugin->settingsName.'-error');	
         	}
         }
     } 
-    
-	/**
-    * Displays Buffer Fields
-    */
-    function displayBufferFields() {
-		global $post;
-        
-        $meta = get_post_meta($post->ID, $this->plugin->name, true); // Get post meta
-        $log = get_post_meta($post->ID, $this->plugin->name.'-log', true); // Get post meta log
-        $defaults = get_option($this->plugin->name); // Get settings
-        if ($defaults['accessToken'] != '') $accounts = $this->Request($defaults['accessToken'], 'profiles.json'); // Get buffer profiles
-
-        // Output fields
-        echo (' <div class="'.$this->plugin->name.'-meta-box">
-                    <input type="hidden" name="'.$this->plugin->name.'_wpnonce" id="theme_wpnonce" value="'.wp_create_nonce(plugin_basename(__FILE__)).'" /> 
-                    
-                    <p>
-                    	Yes <input type="radio" name="'.$this->plugin->name.'[publish]" value="1"'.(!is_array($meta) ? (isset($defaults['enabled'][$post->post_type]['publish']) ? ' checked' : '') : ($meta['publish'] == '1' ? ' checked' : '')).' />
-                    	No <input type="radio" name="'.$this->plugin->name.'[publish]" value="0"'.(!is_array($meta) ? (!isset($defaults['enabled'][$post->post_type]['publish']) ? ' checked' : '') : ($meta['publish'] != '1' ? ' checked' : '')).' />
-                	</p>
-                	<p class="notes">
-                		'.$this->plugin->displayName.' will update Buffer<br />
-                		- on Publish: '.(isset($defaults['enabled'][$post->post_type]['publish']) ? __('Yes') : __('No')).'<br />
-                		- on Update: '.(isset($defaults['enabled'][$post->post_type]['update']) ? __('Yes') : __('No')).'<br />
-                		To change these options, edit your defaults.<br /><br />
-                		<a href="admin.php?page='.$this->plugin->name.'" target="_blank" class="button">Edit Defaults</a>
-                	</p>
-                </div>');	
-    }
-    
-    /**
-    * Saves meta fields for Pages and Posts
-    *
-    * @param int $post_id Post ID
-    */
-    function save($post_id) {
-        if (!isset($_POST[$this->plugin->name.'_wpnonce']) OR !wp_verify_nonce($_POST[$this->plugin->name.'_wpnonce'], plugin_basename(__FILE__))) return $post_id;
-        if (!current_user_can('edit_post', $post_id)) return $post_id;
-        if (count($_POST[$this->plugin->name]) > 0) {
-        	update_post_meta($post_id, $this->plugin->name, $_POST[$this->plugin->name]);    
-        } else {
-        	update_post_meta($post_id, $this->plugin->name, array('saved' => '1')); // Checkboxes don't get sent, so store a random key/value pair so isset() checks in DisplayBufferFields dont tick fields from defaults
-        }  
-    }
     
     /**
     * Alias function called when a post is published or updated
@@ -304,10 +264,16 @@ class WPToBuffer {
 			if ($enabled) $params['profile_ids'][] = $profileID; 
 		}
 		
-		// 7. Send to Buffer and store response
+		// 7. Send to Buffer
+		delete_post_meta($postID, $this->plugin->settingsName.'-success');
+		delete_post_meta($postID, $this->plugin->settingsName.'-error');
+		
 		$result = $this->request($defaults['accessToken'], 'updates/create.json', 'post', $params);
-		update_post_meta($postID, $this->plugin->name.'-request', print_r($params,true));
-		update_post_meta($postID, $this->plugin->name.'-log', $result);	
+		if (is_object($result)) {
+			update_post_meta($postID, $this->plugin->settingsName.'-success', 1);
+		} else {
+			update_post_meta($postID, $this->plugin->settingsName.'-error', 1);
+		}
     }
     
 	/**
@@ -366,6 +332,9 @@ class WPToBuffer {
         		$this->buffer->accounts = $profiles;
         	}
         }
+        
+        // Get selected tab
+		$this->tab = (isset($_GET['tab']) ? $_GET['tab'] : 'auth');
         
 		// Load Settings Form
         include_once(WP_PLUGIN_DIR.'/'.$this->plugin->name.'/views/settings.php');  
