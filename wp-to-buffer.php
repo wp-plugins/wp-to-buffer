@@ -42,6 +42,7 @@ class WPToBuffer {
         // Plugin Details
         $this->plugin = new stdClass;
         $this->plugin->name = 'wp-to-buffer'; // Plugin Folder
+        $this->plugin->settingsName = 'wp-to-buffer';
         $this->plugin->displayName = 'WP to Buffer'; // Plugin Name
         $this->plugin->version = '2.1.6';
         $this->plugin->folder = WP_PLUGIN_DIR.'/'.$this->plugin->name; // Full Path to Plugin Folder
@@ -184,11 +185,8 @@ class WPToBuffer {
     * @param int $postID Post ID
     */
     function publish($postID, $isPublishAction = false) {
-    	$meta = get_post_meta($postID, $this->plugin->name, true); // Get post meta
-        $defaults = get_option($this->plugin->name); // Get settings
-        
-        if (!is_array($meta) OR count($meta) == 0) $meta['publish'] = $_POST[$this->plugin->name]['publish']; // If no meta defined, this is a brand new post - read from post data
-        if ($defaults['accessToken'] == '') return false; // No access token so cannot publish to Buffer
+    	$defaults = get_option($this->plugin->settingsName); // Get settings
+        if (!isset($defaults['accessToken']) OR empty($defaults['accessToken'])) return false; // No access token so cannot publish to Buffer
         
         // Get post
         $post = get_post($postID);
