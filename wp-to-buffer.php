@@ -2,7 +2,7 @@
 /**
 * Plugin Name: WP to Buffer
 * Plugin URI: http://www.wpcube.co.uk/plugins/wp-to-buffer-pro
-* Version: 2.1.5
+* Version: 2.1.6
 * Author: WP Cube
 * Author URI: http://www.wpcube.co.uk
 * Description: Send WordPress Pages, Posts or Custom Post Types to your Buffer (bufferapp.com) account for scheduled publishing to social networks.
@@ -31,7 +31,7 @@
 * @package WP Cube
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 2.1.5
+* @version 2.1.6
 * @copyright WP Cube
 */
 class WPToBuffer {
@@ -43,7 +43,7 @@ class WPToBuffer {
         $this->plugin = new stdClass;
         $this->plugin->name = 'wp-to-buffer'; // Plugin Folder
         $this->plugin->displayName = 'WP to Buffer'; // Plugin Name
-        $this->plugin->version = '2.1.4';
+        $this->plugin->version = '2.1.6';
         $this->plugin->folder = WP_PLUGIN_DIR.'/'.$this->plugin->name; // Full Path to Plugin Folder
         $this->plugin->url = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
         $this->plugin->upgradeReasons = array(
@@ -189,7 +189,6 @@ class WPToBuffer {
         
         if (!is_array($meta) OR count($meta) == 0) $meta['publish'] = $_POST[$this->plugin->name]['publish']; // If no meta defined, this is a brand new post - read from post data
         if ($defaults['accessToken'] == '') return false; // No access token so cannot publish to Buffer
-        if ($meta['publish'] != '1') return false; // Do not need to publish or update
         
         // Get post
         $post = get_post($postID);

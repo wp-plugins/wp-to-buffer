@@ -1,6 +1,8 @@
 <?php
 /**
-* Dashboard Widget
+* WP Cube Dashboard Widget
+*
+* Included in all WP Cube plugins by default, it outputs 
 * 
 * @package WP Cube
 * @subpackage Dashboard
@@ -8,78 +10,34 @@
 * @version 1.0
 * @copyright WP Cube
 */
-class WPCubeDashboardWidget {     
-	/**
-	* Constructor
-	*
-	* @param object $plugin Plugin Object (name, displayName, version, folder, url)
-	*/
-	function __construct($plugin) {
-		// Plugin Details
-        $this->dashboard = $plugin;
-        $this->dashboardURL = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
 
-		// Hooks
-		add_action('admin_enqueue_scripts', array(&$this, 'adminScriptsAndCSS'));
-		add_filter('admin_footer_text', array(&$this, 'adminFooterText'));
-		add_action('wp_dashboard_setup', array(&$this, 'dashboardWidget'));
-		add_action('wp_network_dashboard_setup', array(&$this, 'dashboardWidget'));	
-		
-	}     
-	
-	/**
-    * Register and enqueue shared Admin UI CSS for WP Cube Plugins
-    */
-    function adminScriptsAndCSS() {    
-    	// JS
-    	// This will only enqueue once, despite this hook being called by up to several plugins,
-    	// as we have set a single, distinct name
-    	wp_enqueue_script('wpcube-admin', $this->dashboardURL.'js/admin.js', array('jquery'), $this->dashboard->version, true);
-    	   
-    	// CSS
-    	// This will only enqueue once, despite this hook being called by up to several plugins,
-    	// as we have set a single, distinct name
-        wp_enqueue_style('wpcube-admin', $this->dashboardURL.'css/admin.css'); 
-    }	
-    
-    /**
-    * Replaces the footer text with the plugin name when viewing the plugin
-    */
-    function adminFooterText($default) {
-    	if (isset($_GET['page']) AND $_GET['page'] == $this->dashboard->name) {
-    		echo $this->dashboard->displayName;
-    	} else {
-    		echo $default;
-    	}
-    }
-	
-	/**
-    * Adds a dashboard widget to list WP Cube Products + News
-    *
-    * Checks if another WP Cube plugin has already created this widget - if so, doesn't duplicate it
-    */
-    function dashboardWidget() {
-    	global $wp_meta_boxes;
-    	
-    	if (isset($wp_meta_boxes['dashboard']['normal']['core']['wp_cube'])) return; // Another plugin has already registered this widget
-    	wp_add_dashboard_widget('wp_cube', 'WP Cube', array(&$this, 'outputDashboardWidget'));
-    }
-    
-    /**
-    * Called by dashboardWidget(), includes dashboard.php to output the Dashboard Widget
-    */
-    function outputDashboardWidget() {
-    	$result = wp_remote_get('http://www.wpcube.co.uk/feed/?post_type=lum-product');
-    	if (!is_wp_error($result)) {
-	    	if ($result['response']['code'] == 200) {
-	    		$xml = simplexml_load_string($result['body']);
-	    		$products = $xml->channel;
-	    	}
-	    	
-	    	include_once(WP_PLUGIN_DIR.'/'.$this->dashboard->name.'/_modules/dashboard/views/dashboard.php');
-    	} else {
-    		include_once(WP_PLUGIN_DIR.'/'.$this->dashboard->name.'/_modules/dashboard/views/dashboard-nodata.php');
-    	}
-    }
+if (is_object($products)) {
+	?>
+	<div class="rss-widget">
+		<img src="<?php echo $this->dashboardURL; ?>images/logo.png" class="alignleft" style="margin: 0 10px 0 0;" />
+		<p><?php _e('Thanks for using our plugins - why not check out some of our other amazing Premium WordPress Plugins below?'); ?></p>
+		<ul>
+		<?php
+		foreach ($products->item as $key=>$product) {
+			?>
+			<li>
+				<a href="<?php echo (string) $product->link; ?>" target="_blank" class="rsswidget"><?php echo (string) $product->title; ?></a>
+				<span class="rss-date"></span>
+				<div class="rssSummary">
+					<?php echo (string) $product->description; ?>		
+				</div>
+			</li>
+			<?php	
+		}
+		?>
+			<li><hr /><a href="http://www.wpcube.co.uk/?utm_source=wordpress&utm_medium=link&utm_content=dashboard&utm_campaign=general"><?php _e('Visit the WP Cube Web Site'); ?></a></li>
+		</ul>
+	</div>
+	<?php
+} else {
+	?>
+	<p><?php echo(__('Why not visit').' http://www.wpcube.co.uk '.__('and check out some of our other amazing Premium WordPress Plugins?')); ?></p>
+	<p><a href="http://www.wpcube.co.uk/?utm_source=wordpress&utm_medium=link&utm_content=dashboard&utm_campaign=general" target="_blank" class="button"><?php _e('Visit WP Cube'); ?></a></p>
+	<?php
 }
 ?>

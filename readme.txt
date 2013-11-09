@@ -64,6 +64,10 @@ Find out more about us:
 
 == Changelog ==
 
+= 2.1.6 =
+* Fix: Dashboard widget
+* Fix: Some Posts not adding to Buffer due to meta key check
+
 = 2.1.5 =
 * Fix: Don't show success message when Post/Page not posted to Buffer
 * Fix: Removed Post to Buffer meta box, which wasn't honouring settings / causing double postings
