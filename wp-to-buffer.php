@@ -2,7 +2,7 @@
 /**
 * Plugin Name: WP to Buffer
 * Plugin URI: http://www.wpcube.co.uk/plugins/wp-to-buffer-pro
-* Version: 2.1.6
+* Version: 2.1.8
 * Author: WP Cube
 * Author URI: http://www.wpcube.co.uk
 * Description: Send WordPress Pages, Posts or Custom Post Types to your Buffer (bufferapp.com) account for scheduled publishing to social networks.
@@ -31,7 +31,7 @@
 * @package WP Cube
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 2.1.6
+* @version 2.1.8
 * @copyright WP Cube
 */
 class WPToBuffer {
@@ -44,13 +44,16 @@ class WPToBuffer {
         $this->plugin->name = 'wp-to-buffer'; // Plugin Folder
         $this->plugin->settingsName = 'wp-to-buffer';
         $this->plugin->displayName = 'WP to Buffer'; // Plugin Name
-        $this->plugin->version = '2.1.6';
+        $this->plugin->version = '2.1.8';
         $this->plugin->folder = WP_PLUGIN_DIR.'/'.$this->plugin->name; // Full Path to Plugin Folder
         $this->plugin->url = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
         $this->plugin->upgradeReasons = array(
+        	array(__('Optional Featured Image'), __('Choose to include your featured image or not in each status update.')),
+        	array(__('Send Multiple Times'), __('Send your publish or update status 1, 2 or 3 times to Buffer.')),
+        	array(__('Enhanced Tag Interface'), __('All available tags and taxonomy tags are available, and can be added to your publish and update status messages with a single mouse click.')),
         	array(__('Send Immediately'), __('Choose to send Posts, Pages and Custom Post Types immediately through your Buffer account.')),
         	array(__('Taxonomy Level Filtering'), __('Advanced controls to only publish Posts, Pages and/or Custom Post Types that match Taxonomy Term(s).')),
-        	array(__('Analytics'), __('Per-post analytics, allowing you to quickly see the reach, clicks and shares of your Post.')),
+        	array(__('Post Overrides'), __('Choose to override plugin wide settings on every Page, Post and Custom Post Type, allowing you to define a custom status message, number of times to send, and which accounts to send to.')),
         );
         $this->plugin->upgradeURL = 'http://www.wpcube.co.uk/plugins/wp-to-buffer-pro';
         
@@ -96,21 +99,6 @@ class WPToBuffer {
     */
     function adminPanelsAndMetaBoxes() {
         add_menu_page($this->plugin->displayName, $this->plugin->displayName, 'manage_options', $this->plugin->name, array(&$this, 'adminPanel'), $this->plugin->url.'images/icons/small.png');
-    }
-    
-    /**
-    * Deferred init for adding publish actions after all Custom Post Types are registered
-    */
-    function addPublishActions() {
-		// Publishing Hooks for each Post Type
-        $types = get_post_types('', 'names');
-    	foreach ($types as $key=>$type) {
-    		if (in_array($type, $this->plugin->ignorePostTypes)) continue; // Skip ignored Post Types
-    		
-    		add_action('publish_'.$type, array(&$this, 'publishToBufferNow'));
-			add_action('publish_future_'.$type, array(&$this, 'publishToBufferFuture'));
-			add_action('xmlrpc_publish_'.$type, array(&$this, 'publishToBufferXMLRPC'));
-		}
     }
     
     /**
@@ -247,6 +235,7 @@ class WPToBuffer {
 			// Get image source
 			$featuredImageSrc = wp_get_attachment_image_src($featuredImageID);
 			if (is_array($featuredImageSrc)) {
+				$image['title'] = $post->post_title; // Required for LinkedIn to work
 				$image['picture'] = $featuredImageSrc[0];
 				$image['link'] = rtrim(get_permalink($post->ID), '/');
 				$image['description'] = $post->post_title;

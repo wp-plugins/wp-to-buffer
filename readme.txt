@@ -64,6 +64,12 @@ Find out more about us:
 
 == Changelog ==
 
+= 2.1.8 =
+* Fix: Stops URLs and images being stripped from some updates to LinkedIn
+
+= 2.1.7 =
+* Fix: Removed unused addPublishActions function
+
 = 2.1.6 =
 * Fix: Dashboard widget
 * Fix: Some Posts not adding to Buffer due to meta key check
