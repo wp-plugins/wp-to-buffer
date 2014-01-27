@@ -2,7 +2,7 @@
 /**
 * Plugin Name: WP to Buffer
 * Plugin URI: http://www.wpcube.co.uk/plugins/wp-to-buffer-pro
-* Version: 2.2
+* Version: 2.2.1
 * Author: WP Cube
 * Author URI: http://www.wpcube.co.uk
 * Description: Send WordPress Pages, Posts or Custom Post Types to your Buffer (bufferapp.com) account for scheduled publishing to social networks.
@@ -31,7 +31,7 @@
 * @package WP Cube
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 2.2
+* @version 2.2.1
 * @copyright WP Cube
 */
 class WPToBuffer {
@@ -44,7 +44,7 @@ class WPToBuffer {
         $this->plugin->name = 'wp-to-buffer'; // Plugin Folder
         $this->plugin->settingsName = 'wp-to-buffer';
         $this->plugin->displayName = 'WP to Buffer'; // Plugin Name
-        $this->plugin->version = '2.2';
+        $this->plugin->version = '2.2.1';
         $this->plugin->folder = WP_PLUGIN_DIR.'/'.$this->plugin->name; // Full Path to Plugin Folder
         $this->plugin->url = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
         $this->plugin->upgradeReasons = array(
@@ -72,8 +72,7 @@ class WPToBuffer {
 		if (isset($settings) AND isset($settings['enabled']) AND is_array($settings['enabled'])) {
 			foreach ($settings['enabled'] as $type=>$opts) {
 				add_action('publish_'.$type, array(&$this, 'PublishToBufferNow'));
-				add_action('publish_future_'.$type, array(&$this, 'PublishToBufferFuture'));
-				add_action('xmlrpc_publish_'.$type, array(&$this, 'PublishToBufferXMLRPC'));	
+				add_action('publish_future_'.$type, array(&$this, 'PublishToBufferFuture'));	
 			}
 		}
 		
@@ -119,16 +118,25 @@ class WPToBuffer {
         
         // Output success and/or error messages if we are on a post and it has a meta key
         if (isset($_GET['message']) AND isset($_GET['post'])) {
+        	// Success
         	$success = get_post_meta($_GET['post'], $this->plugin->settingsName.'-success', true);
         	if ($success == 1) {
-        		echo (' <div class="updated success"><p>'.__('Post added to Buffer successfully', $this->plugin->name).'</p></div>');
+        		// Get Message
+        		$message = get_post_meta($_GET['post'], $this->plugin->settingsName.'-success-message', true);
+        		$message = ((!empty($message) AND trim($message) != '') ? $message : __('Post added to Buffer successfully', $this->plugin->name));
+ 				
+ 				// Output + clear meta
+        		echo (' <div class="updated success"><p>'.$this->plugin->displayName.': '.$message.'</p></div>');
         		delete_post_meta($_GET['post'], $this->plugin->settingsName.'-success');	
+        		delete_post_meta($_GET['post'], $this->plugin->settingsName.'-success-message');
         	}
         	
+        	// Error
         	$error = get_post_meta($_GET['post'], $this->plugin->settingsName.'-error', true);
         	if ($error == 1) {
-        		echo (' <div class="error"><p>'.__('Could not add Post to Buffer due to an API error. Please manually publish to Buffer', $this->plugin->name).'</p></div>');
-        		delete_post_meta($_GET['post'], $this->plugin->settingsName.'-error');	
+        		echo (' <div class="error"><p>'.get_post_meta($_GET['post'], $this->plugin->settingsName.'-error-message', true).'</p></div>');
+        		delete_post_meta($_GET['post'], $this->plugin->settingsName.'-error');
+        		delete_post_meta($_GET['post'], $this->plugin->settingsName.'-error-message');	
         	}
         }
     } 
@@ -157,17 +165,6 @@ class WPToBuffer {
     }
     
     /**
-    * Alias function called when a post is published or updated via XMLRPC
-    *
-    * Passes on the request to the main Publish function
-    *
-    * @param int $postID Post ID
-    */
-    function publishToBufferXMLRPC($postID) {
-    	$this->publish($postID, true);	
-    }
-    
-    /**
     * Called when any Page, Post or Custom Post Type is published or updated, live or for a scheduled post
     *
     * @param int $postID Post ID
@@ -178,6 +175,11 @@ class WPToBuffer {
         
         // Get post
         $post = get_post($postID);
+        
+        // If request has come from XMLRPC, force $isPublishAction
+        if (defined('XMLRPC_REQUEST')) {
+        	$isPublishAction = true;
+        }
 
 		// Determine if this is a publish or update action
         if ($_POST['original_post_status'] == 'draft' OR 
@@ -256,8 +258,8 @@ class WPToBuffer {
 		// 7. Send to Buffer
 		delete_post_meta($postID, $this->plugin->settingsName.'-success');
 		delete_post_meta($postID, $this->plugin->settingsName.'-error');
-		
 		$result = $this->request($defaults['accessToken'], 'updates/create.json', 'post', $params);
+		
 		if (is_object($result)) {
 			update_post_meta($postID, $this->plugin->settingsName.'-success', 1);
 		} else {

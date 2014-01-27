@@ -64,6 +64,10 @@ Find out more about us:
 
 == Changelog ==
 
+= 2.2.1 =
+* Fix: Prevent double posting when Posts with category filtering are enabled, and a Post is added via third party apps using the XML RPC API
+* Fix: Pages can be posted to Buffer via XML RPC API
+
 = 2.2 =
 * Fix: Twitter Images attached to tweets
 * Fix: Featured Images on Facebook
