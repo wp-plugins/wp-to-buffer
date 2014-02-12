@@ -2,14 +2,14 @@
 /**
 * Plugin Name: WP to Buffer
 * Plugin URI: http://www.wpcube.co.uk/plugins/wp-to-buffer-pro
-* Version: 2.2.1
+* Version: 2.3
 * Author: WP Cube
 * Author URI: http://www.wpcube.co.uk
 * Description: Send WordPress Pages, Posts or Custom Post Types to your Buffer (bufferapp.com) account for scheduled publishing to social networks.
 * License: GPL2
 */
 
-/*  Copyright 2013 WP Cube (email : support@wpcube.co.uk)
+/*  Copyright 2014 WP Cube (email : support@wpcube.co.uk)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License, version 2, as 
@@ -31,7 +31,7 @@
 * @package WP Cube
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 2.2.1
+* @version 2.3
 * @copyright WP Cube
 */
 class WPToBuffer {
@@ -44,10 +44,11 @@ class WPToBuffer {
         $this->plugin->name = 'wp-to-buffer'; // Plugin Folder
         $this->plugin->settingsName = 'wp-to-buffer';
         $this->plugin->displayName = 'WP to Buffer'; // Plugin Name
-        $this->plugin->version = '2.2.1';
+        $this->plugin->version = '2.3';
         $this->plugin->folder = WP_PLUGIN_DIR.'/'.$this->plugin->name; // Full Path to Plugin Folder
         $this->plugin->url = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
         $this->plugin->upgradeReasons = array(
+        	array(__('Settings per Account'), __('Each social media account for each Post Type can have its own settings defined for status updates, images, filtering etc.')),
         	array(__('Optional Featured Image'), __('Choose to include your featured image or not in each status update.')),
         	array(__('Send Multiple Times'), __('Send your publish or update status 1, 2 or 3 times to Buffer.')),
         	array(__('Enhanced Tag Interface'), __('All available tags and taxonomy tags are available, and can be added to your publish and update status messages with a single mouse click.')),
@@ -180,6 +181,14 @@ class WPToBuffer {
         if (defined('XMLRPC_REQUEST')) {
         	$isPublishAction = true;
         }
+        
+        // Check at least one account is enabled
+        if (!isset($defaults['ids'])) {
+        	return false;
+        }
+        if (!isset($defaults['ids'][$post->post_type])) {
+        	return false;
+        }
 
 		// Determine if this is a publish or update action
         if ($_POST['original_post_status'] == 'draft' OR 
@@ -224,7 +233,7 @@ class WPToBuffer {
 		// 4. Parse text and description
 		$params['text'] = $defaults['message'][$post->post_type][$updateType];
 		$params['text'] = str_replace('{sitename}', get_bloginfo('name'), $params['text']);
-		$params['text'] = str_replace('{title}', $post->post_title, $params['text']);
+		$params['text'] = str_replace('{title}', get_the_title($post->ID), $params['text']);
 		$params['text'] = str_replace('{excerpt}', $excerpt, $params['text']);
 		$params['text'] = str_replace('{category}', trim($catNames), $params['text']);
 		$params['text'] = str_replace('{date}', date('dS F Y', strtotime($post->post_date)), $params['text']);
