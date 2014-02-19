@@ -64,6 +64,9 @@ Find out more about us:
 
 == Changelog ==
 
+= 2.3.1 =
+* Fix: Issue with characters in the title being HTML encoded
+
 = 2.3 =
 * Fix: Uses get_the_title() when generating status updates for social networks
 * Fix: Check that at least one social media profile has been chosen before trying to update via the API

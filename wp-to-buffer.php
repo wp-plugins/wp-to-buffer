@@ -2,7 +2,7 @@
 /**
 * Plugin Name: WP to Buffer
 * Plugin URI: http://www.wpcube.co.uk/plugins/wp-to-buffer-pro
-* Version: 2.3
+* Version: 2.3.1
 * Author: WP Cube
 * Author URI: http://www.wpcube.co.uk
 * Description: Send WordPress Pages, Posts or Custom Post Types to your Buffer (bufferapp.com) account for scheduled publishing to social networks.
@@ -31,7 +31,7 @@
 * @package WP Cube
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 2.3
+* @version 2.3.1
 * @copyright WP Cube
 */
 class WPToBuffer {
@@ -233,7 +233,7 @@ class WPToBuffer {
 		// 4. Parse text and description
 		$params['text'] = $defaults['message'][$post->post_type][$updateType];
 		$params['text'] = str_replace('{sitename}', get_bloginfo('name'), $params['text']);
-		$params['text'] = str_replace('{title}', get_the_title($post->ID), $params['text']);
+		$params['text'] = str_replace('{title}', html_entity_decode(apply_filters('the_title', $post->post_title)), $params['text']);
 		$params['text'] = str_replace('{excerpt}', $excerpt, $params['text']);
 		$params['text'] = str_replace('{category}', trim($catNames), $params['text']);
 		$params['text'] = str_replace('{date}', date('dS F Y', strtotime($post->post_date)), $params['text']);
