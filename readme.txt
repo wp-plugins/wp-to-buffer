@@ -64,6 +64,10 @@ Find out more about us:
 
 == Changelog ==
 
+= 2.3.2 =
+* Fix: Settings tabs not working / all settings panels displaying at once
+* Added translation support and .pot file 
+
 = 2.3.1 =
 * Fix: Issue with characters in the title being HTML encoded
 

@@ -69,7 +69,7 @@ class WPCubeDashboardWidget {
     * Called by dashboardWidget(), includes dashboard.php to output the Dashboard Widget
     */
     function outputDashboardWidget() {
-    	$result = wp_remote_get('http://www.wpcube.co.uk/feed/?post_type=lum-product');
+    	$result = wp_remote_get('http://www.wpcube.co.uk/feed/products');
     	if (!is_wp_error($result)) {
 	    	if ($result['response']['code'] == 200) {
 	    		$xml = simplexml_load_string($result['body']);

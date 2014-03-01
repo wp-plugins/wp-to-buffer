@@ -2,10 +2,11 @@
 /**
 * Plugin Name: WP to Buffer
 * Plugin URI: http://www.wpcube.co.uk/plugins/wp-to-buffer-pro
-* Version: 2.3.1
+* Version: 2.3.2
 * Author: WP Cube
 * Author URI: http://www.wpcube.co.uk
 * Description: Send WordPress Pages, Posts or Custom Post Types to your Buffer (bufferapp.com) account for scheduled publishing to social networks.
+* Text Domain: wp-to-buffer
 * License: GPL2
 */
 
@@ -31,7 +32,7 @@
 * @package WP Cube
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 2.3.1
+* @version 2.3.2
 * @copyright WP Cube
 */
 class WPToBuffer {
@@ -44,7 +45,7 @@ class WPToBuffer {
         $this->plugin->name = 'wp-to-buffer'; // Plugin Folder
         $this->plugin->settingsName = 'wp-to-buffer';
         $this->plugin->displayName = 'WP to Buffer'; // Plugin Name
-        $this->plugin->version = '2.3';
+        $this->plugin->version = '2.3.2';
         $this->plugin->folder = WP_PLUGIN_DIR.'/'.$this->plugin->name; // Full Path to Plugin Folder
         $this->plugin->url = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
         $this->plugin->upgradeReasons = array(
@@ -68,19 +69,25 @@ class WPToBuffer {
 		}
 		$dashboard = new WPCubeDashboardWidget($this->plugin); 
 		
-		// Publish Actions for chosen post types
-		$settings = get_option($this->plugin->name);
-		if (isset($settings) AND isset($settings['enabled']) AND is_array($settings['enabled'])) {
-			foreach ($settings['enabled'] as $type=>$opts) {
-				add_action('publish_'.$type, array(&$this, 'PublishToBufferNow'));
-				add_action('publish_future_'.$type, array(&$this, 'PublishToBufferFuture'));	
-			}
-		}
-		
 		// Hooks
+		add_action('wp_loaded', array(&$this, 'registerPublishHooks'));
         add_action('admin_enqueue_scripts', array(&$this, 'adminScriptsAndCSS'));
         add_action('admin_menu', array(&$this, 'adminPanelsAndMetaBoxes'));
         add_action('admin_notices', array(&$this, 'AdminNotices')); 
+        add_action('plugins_loaded', array(&$this, 'loadLanguageFiles'));
+    }
+    
+    /**
+    * Registers publish hooks against all public Post Types
+    */
+    function registerPublishHooks() {    	
+    	$types = get_post_types(array(
+    		'public' => true,
+    	));
+    	foreach ($types as $type) {
+    		add_action('publish_'.$type, array(&$this, 'publishToBufferNow'));
+			add_action('publish_future_'.$type, array(&$this, 'publishToBufferFuture'));	
+    	}	
     }
     
     /**
@@ -264,6 +271,11 @@ class WPToBuffer {
 			if ($enabled) $params['profile_ids'][] = $profileID; 
 		}
 		
+		// If text is empty, something went wrong
+		if (trim($params['text']) == '') {
+			return false;
+		}
+		
 		// 7. Send to Buffer
 		delete_post_meta($postID, $this->plugin->settingsName.'-success');
 		delete_post_meta($postID, $this->plugin->settingsName.'-error');
@@ -338,6 +350,13 @@ class WPToBuffer {
         
 		// Load Settings Form
         include_once(WP_PLUGIN_DIR.'/'.$this->plugin->name.'/views/settings.php');  
+    }
+    
+    /**
+    * Loads plugin textdomain
+    */
+    function loadLanguageFiles() {
+    	load_plugin_textdomain($this->plugin->name, false, $this->plugin->name.'/languages/');
     }
     
     /**

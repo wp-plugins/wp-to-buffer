@@ -42,7 +42,7 @@
 		        <form id="post" name="post" method="post" action="admin.php?page=<?php echo $this->plugin->name; ?>">
 		            <div id="normal-sortables" class="meta-box-sortables ui-sortable publishing-defaults">                        
 		                <!-- Authentication -->
-	                    <div id="auth-panel" class="postbox">
+	                    <div id="auth-panel" class="panel postbox">
 	                        <h3 class="hndle"><?php _e('Buffer Authentication', $this->plugin->name); ?></h3>
 	                        
                         	<?php
@@ -89,7 +89,7 @@
 						</div>
 						
 						<!-- Help -->
-						<div id="help-panel" class="postbox">
+						<div id="help-panel" class="panel postbox">
                         	<h3 class="hndle"><?php _e('Publishing Defaults', $this->plugin->name); ?></h3>
                         	<div class="option">
                         		<p>
@@ -117,7 +117,7 @@
                         		if (in_array($type, $this->plugin->ignorePostTypes)) continue; // Skip ignored Post Types
                         		$postType = get_post_type_object($type);
                         		?>
-                        		<div id="<?php echo $type; ?>-panel" class="postbox">
+                        		<div id="<?php echo $type; ?>-panel" class="panel postbox">
 	                        		<h3 class="hndle"><?php _e($postType->label); ?></h3>
 	                        		
 	                        		<div class="option">
