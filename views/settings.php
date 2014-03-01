@@ -15,6 +15,25 @@
     }
     ?> 
     
+    <!-- Tabs -->
+	<h2 class="nav-tab-wrapper needs-js">
+		<a href="#auth" class="nav-tab<?php echo ($this->tab == 'auth' ? ' nav-tab-active' : ''); ?>"><?php _e('Authentication', $this->plugin->name); ?></a>
+		<a href="#help" class="nav-tab<?php echo ($this->tab == 'help' ? ' nav-tab-active' : ''); ?>"><?php _e('Help', $this->plugin->name); ?></a>
+		<?php                            	
+    	// Go through all Post Types, if Buffer is authenticated
+	    if (isset($this->settings['accessToken']) AND !empty($this->settings['accessToken'])) {                	
+	    	$types = get_post_types('', 'names');
+	    	foreach ($types as $key=>$type) {
+	    		if (in_array($type, $this->plugin->ignorePostTypes)) continue; // Skip ignored Post Types
+	    		$postType = get_post_type_object($type);
+	    		?>
+	    		<a href="#<?php echo $type; ?>" class="nav-tab<?php echo ($this->tab == $type ? ' nav-tab-active' : ''); ?>"><?php echo $postType->label; ?></a>
+	    		<?php
+	    	}
+    	}
+    	?>
+	</h2>
+    
     <div id="poststuff">
     	<div id="post-body" class="metabox-holder columns-2">
     		<!-- Content -->
@@ -23,7 +42,7 @@
 		        <form id="post" name="post" method="post" action="admin.php?page=<?php echo $this->plugin->name; ?>">
 		            <div id="normal-sortables" class="meta-box-sortables ui-sortable publishing-defaults">                        
 		                <!-- Authentication -->
-	                    <div class="postbox">
+	                    <div id="auth-panel" class="panel postbox">
 	                        <h3 class="hndle"><?php _e('Buffer Authentication', $this->plugin->name); ?></h3>
 	                        
                         	<?php
@@ -68,40 +87,37 @@
                         	}
                         	?>
 						</div>
+						
+						<!-- Help -->
+						<div id="help-panel" class="panel postbox">
+                        	<h3 class="hndle"><?php _e('Publishing Defaults', $this->plugin->name); ?></h3>
+                        	<div class="option">
+                        		<p>
+                        			<?php _e('For each Post Type, tick whether to send an update to Buffer when Publishing and/or Updating a Post.', $this->plugin->name); ?>
+                        		</p>
+                            	<ul>
+                            		<li>Define the update's text using the text boxes below each option.  Valid tags are:</li>
+	                            	<li><strong>{sitename}</strong> the title of your blog</li>
+	                            	<li><strong>{title}</strong> the title of your blog post</li>
+									<li><strong>{excerpt}</strong> a short excerpt of the post content</li>
+									<li><strong>{category}</strong> the first selected category for the post</li>
+									<li><strong>{date}</strong> the post date</li>
+									<li><strong>{url}</strong> the post URL</li>
+									<li><strong>{author}</strong> the post author</li>
+                                </ul>	
+                        	</div>
+                        </div>
 	                    
 	                    <?php
 	                    // Buffer Settings, only displayed if we have an access token
 	                    if (isset($this->settings['accessToken']) AND !empty($this->settings['accessToken'])) {
-	                    	?>
-	                    	<!-- Publishing Defaults -->
-	                    	<div class="postbox">
-	                        	<h3 class="hndle"><?php _e('Publishing Defaults', $this->plugin->name); ?></h3>
-	                        	<div class="option">
-	                        		<p>
-	                        			<?php _e('For each Post Type below, tick whether to send an update to Buffer when Publishing and/or Updating a Post.', $this->plugin->name); ?>
-	                        		</p>
-	                            	<ul>
-	                            		<li>Define the update's text using the text boxes below each option.  Valid tags are:</li>
-		                            	<li><strong>{sitename}</strong> the title of your blog</li>
-		                            	<li><strong>{title}</strong> the title of your blog post</li>
-										<li><strong>{excerpt}</strong> a short excerpt of the post content</li>
-										<li><strong>{category}</strong> the first selected category for the post</li>
-										<li><strong>{date}</strong> the post date</li>
-										<li><strong>{url}</strong> the post URL</li>
-										<li><strong>{author}</strong> the post author</li>
-	                                </ul>	
-	                        	</div>
-	                        </div>
-	                        	
-	                        <!-- Post Types -->
-	                        <?php                            	
-                        	// Go through all Post Types
+	                    	// Go through all Post Types
                         	$types = get_post_types('', 'names');
                         	foreach ($types as $key=>$type) {
                         		if (in_array($type, $this->plugin->ignorePostTypes)) continue; // Skip ignored Post Types
                         		$postType = get_post_type_object($type);
                         		?>
-                        		<div class="postbox">
+                        		<div id="<?php echo $type; ?>-panel" class="panel postbox">
 	                        		<h3 class="hndle"><?php _e($postType->label); ?></h3>
 	                        		
 	                        		<div class="option">
@@ -164,9 +180,18 @@
     		
     		<!-- Sidebar -->
     		<div id="postbox-container-1" class="postbox-container">
-    			<?php require_once($this->plugin->folder.'/_modules/dashboard/views/sidebar-donate.php'); ?>		
+    			<?php require_once($this->plugin->folder.'/_modules/dashboard/views/sidebar-upgrade.php'); ?>		
     		</div>
     		<!-- /postbox-container -->
     	</div>
-	</div>      
+	</div> 
+	
+	<!-- Upgrade -->
+	<div id="poststuff">
+    	<div id="post-body" class="metabox-holder columns-1">
+    		<div id="post-body-content">
+    			<?php require_once($this->plugin->folder.'/_modules/dashboard/views/footer-upgrade.php'); ?>
+    		</div>
+    	</div>
+    </div>      
 </div>

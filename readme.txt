@@ -1,9 +1,9 @@
 === WP to Buffer ===
 Contributors: n7studios,wpcube
-Donate link: http://www.wpcube.co.uk/plugins/wp-to-buffer
+Donate link: http://www.wpcube.co.uk/plugins/wp-to-buffer-pro
 Tags: buffer,bufferapp,schedule,twitter,facebook,linkedin,google,social,media,sharing,post
 Requires at least: 3.6
-Tested up to: 3.7
+Tested up to: 3.8.1
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -63,6 +63,52 @@ Find out more about us:
 4. Post level settings meta box.
 
 == Changelog ==
+
+= 2.3.2 =
+* Fix: Settings tabs not working / all settings panels displaying at once
+* Added translation support and .pot file 
+
+= 2.3.1 =
+* Fix: Issue with characters in the title being HTML encoded
+
+= 2.3 =
+* Fix: Uses get_the_title() when generating status updates for social networks
+* Fix: Check that at least one social media profile has been chosen before trying to update via the API
+
+= 2.2.1 =
+* Fix: Prevent double posting when Posts with category filtering are enabled, and a Post is added via third party apps using the XML RPC API
+* Fix: Pages can be posted to Buffer via XML RPC API
+
+= 2.2 =
+* Fix: Twitter Images attached to tweets
+* Fix: Featured Images on Facebook
+
+= 2.1.8 =
+* Fix: Stops URLs and images being stripped from some updates to LinkedIn
+
+= 2.1.7 =
+* Fix: Removed unused addPublishActions function
+
+= 2.1.6 =
+* Fix: Dashboard widget
+* Fix: Some Posts not adding to Buffer due to meta key check
+
+= 2.1.5 =
+* Fix: Don't show success message when Post/Page not posted to Buffer
+* Fix: Removed Post to Buffer meta box, which wasn't honouring settings / causing double postings
+* Settings: changed to tabbed interface
+
+= 2.1.4 =
+* Fix: Dashboard: PHP fatal error
+
+= 2.1.3 =
+* Fix: Posts with an image no longer show the image link, but instead show the Page / Post URL
+
+= 2.1.2 =
+* Fix: Donation Form
+
+= 2.1.1 =
+* Fix: Some assets missing from SVN checkin on 2.1
 
 = 2.1 =
 * Fix: 'Creating default object from empty value' warning
