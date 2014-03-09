@@ -64,6 +64,9 @@ Find out more about us:
 
 == Changelog ==
 
+= 2.3.3 =
+* Dropped html_entity_decode and apply_filters on Post Title - causing too many issues.
+
 = 2.3.2 =
 * Fix: Settings tabs not working / all settings panels displaying at once
 * Added translation support and .pot file 
