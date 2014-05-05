@@ -2,7 +2,7 @@
 /**
 * Plugin Name: WP to Buffer
 * Plugin URI: http://www.wpcube.co.uk/plugins/wp-to-buffer-pro
-* Version: 2.3.3
+* Version: 2.3.4
 * Author: WP Cube
 * Author URI: http://www.wpcube.co.uk
 * Description: Send WordPress Pages, Posts or Custom Post Types to your Buffer (bufferapp.com) account for scheduled publishing to social networks.
@@ -32,7 +32,7 @@
 * @package WP Cube
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 2.3.3
+* @version 2.3.4
 * @copyright WP Cube
 */
 class WPToBuffer {
@@ -45,7 +45,7 @@ class WPToBuffer {
         $this->plugin->name = 'wp-to-buffer'; // Plugin Folder
         $this->plugin->settingsName = 'wp-to-buffer';
         $this->plugin->displayName = 'WP to Buffer'; // Plugin Name
-        $this->plugin->version = '2.3.3';
+        $this->plugin->version = '2.3.4';
         $this->plugin->folder = WP_PLUGIN_DIR.'/'.$this->plugin->name; // Full Path to Plugin Folder
         $this->plugin->url = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
         $this->plugin->upgradeReasons = array(
@@ -53,6 +53,7 @@ class WPToBuffer {
         	array(__('Optional Featured Image'), __('Choose to include your featured image or not in each status update.')),
         	array(__('Send Multiple Times'), __('Send your publish or update status 1, 2 or 3 times to Buffer.')),
         	array(__('Enhanced Tag Interface'), __('All available tags and taxonomy tags are available, and can be added to your publish and update status messages with a single mouse click.')),
+        	array(__('Custom Field Tags'), __('Any Post custom fields can be added to your publish and update status messages.')),
         	array(__('Send Immediately'), __('Choose to send Posts, Pages and Custom Post Types immediately through your Buffer account.')),
         	array(__('Taxonomy Level Filtering'), __('Advanced controls to only publish Posts, Pages and/or Custom Post Types that match Taxonomy Term(s).')),
         	array(__('Post Overrides'), __('Choose to override plugin wide settings on every Page, Post and Custom Post Type, allowing you to define a custom status message, number of times to send, and which accounts to send to.')),
@@ -69,20 +70,25 @@ class WPToBuffer {
 		}
 		$dashboard = new WPCubeDashboardWidget($this->plugin); 
 		
-		// Publish Actions for chosen post types
-		$settings = get_option($this->plugin->name);
-		if (isset($settings) AND isset($settings['enabled']) AND is_array($settings['enabled'])) {
-			foreach ($settings['enabled'] as $type=>$opts) {
-				add_action('publish_'.$type, array(&$this, 'PublishToBufferNow'));
-				add_action('publish_future_'.$type, array(&$this, 'PublishToBufferFuture'));	
-			}
-		}
-		
 		// Hooks
         add_action('admin_enqueue_scripts', array(&$this, 'adminScriptsAndCSS'));
         add_action('admin_menu', array(&$this, 'adminPanelsAndMetaBoxes'));
         add_action('admin_notices', array(&$this, 'AdminNotices')); 
+        add_action('wp_loaded', array(&$this, 'registerPublishHooks'));
         add_action('plugins_loaded', array(&$this, 'loadLanguageFiles'));
+    }
+    
+    /**
+    * Registers publish hooks against all public Post Types
+    */
+    function registerPublishHooks() {    	
+    	$types = get_post_types(array(
+    		'public' => true,
+    	));
+    	foreach ($types as $type) {
+    		add_action('publish_'.$type, array(&$this, 'publishToBufferNow'));
+			add_action('publish_future_'.$type, array(&$this, 'publishToBufferFuture'));	
+    	}	
     }
     
     /**
@@ -184,6 +190,16 @@ class WPToBuffer {
         	$isPublishAction = true;
         }
         
+        // Assume we don't publish to Buffer
+    	$updateType = '';
+    	$doPostToBuffer = false;
+    	
+    	// Do some logging for debugging
+    	$fp = fopen('/Users/tim/sites/_logs/log.txt', 'w+');
+		fwrite($fp, print_r($defaults,true));
+		fwrite($fp, print_r($post,true));
+		fclose($fp);
+        
         // Check at least one account is enabled
         if (!isset($defaults['ids'])) {
         	return false;
@@ -202,13 +218,20 @@ class WPToBuffer {
         	// Publish?
         	if ($defaults['enabled'][$post->post_type]['publish'] != '1') return false; // No Buffer needed for publish
         	$updateType = 'publish';
+        	$doPostToBuffer = true; 
         }
         
 		if ($_POST['original_post_status'] == 'publish') {
         	// Update?
         	if ($defaults['enabled'][$post->post_type]['update'] != '1') return false; // No Buffer needed for update
         	$updateType = 'update';
+        	$doPostToBuffer = true;
         }
+        
+        // If not posting to Buffer, exit
+        if (!$doPostToBuffer) {
+	    	return false;
+	    }
         
 		// 1. Get post categories if any exist
 		$catNames = '';
