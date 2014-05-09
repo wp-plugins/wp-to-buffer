@@ -64,6 +64,9 @@ Find out more about us:
 
 == Changelog ==
 
+= 2.3.5 =
+* Fix: Removed logging
+
 = 2.3.4 =
 * Fix: Double posts in Buffer when a scheduled Post goes live.
 
