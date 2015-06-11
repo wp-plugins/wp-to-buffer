@@ -1,9 +1,9 @@
-=== WP to Buffer ===
+=== WordPress to Buffer ===
 Contributors: n7studios,wpcube
-Donate link: http://www.wpcube.co.uk/plugins/wp-to-buffer-pro
-Tags: buffer,bufferapp,schedule,twitter,facebook,linkedin,google,social,media,sharing,post
+Donate link: http://www.wpcube.co.uk/plugins/wordpress-to-buffer-pro
+Tags: buffer,bufferapp,buffer app,twitter,facebook,linkedin,google,pinterest,social,media,sharing,social media,facebook post,twitter post,linkedin post,google post, pinterest post,social sharing,schedule,auto post,auto publish
 Requires at least: 3.6
-Tested up to: 4.0
+Tested up to: 4.3
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -12,44 +12,47 @@ Send WordPress Pages, Posts or Custom Post Types to your Buffer (bufferapp.com) 
 
 == Description ==
 
-WP to Buffer is a plugin for WordPress that sends updates to your Buffer (bufferapp.com) account  for scheduled publishing to social networks when you publish and/or update WordPress Pages, Posts and/or Custom Post Types.
+WordPress to Buffer is a plugin for WordPress that sends updates to your Buffer (bufferapp.com) account for scheduled publishing to social networks, such as Facebook, Twitter, LinkedIn and Google+, when you publish and/or update WordPress Pages, Posts and/or Custom Post Types.
 
-Plugin settings allow granular control over choosing:
-- Sending updates to Buffer for Posts, Pages and/or any Custom Post Types
-- Sending updates when any of the above are published, updated or both or neither
-- Text format to use when sending an update on publish or update events, with support for tags including site name, Post title, excerpt, categories, date, URL and author
-- Which social media accounts connected to your Buffer account to publish updates to (Facebook, Twitter or LinkedIn)
-
-When creating or editing a Page, Post or Custom Post Type, sending the update to Buffer can be overridden for that specific content item.
+> #### WordPress to Buffer Pro
+> <a href="https://www.wpcube.co.uk/plugins/wordpress-to-buffer-pro/" rel="friend" title="WordPress to Buffer Pro - Publish to Facebook, Twitter, LinkedIn, Google+ and Pinterest">WordPress to Buffer Pro</a> provides additional functionality:<br />
+>
+> - Pinterest: Post to your Pinterest boards<br />
+> - Separate Options per Social Network: Define different statuses for each Post Type and Social Network<br />
+> - Post, Author and Custom Meta Tags: Dynamically build status updates with Post, Author and Meta tags<br />
+> - Featured Images: Choose to display WordPress Featured Images with your status updates<br />
+> - Unlimited Statuses per Profile: Send your publish/update statuses any number of times<br />
+> - Individual Settings per Status: Each status update can have its own unique settings<br />
+> - Powerful Scheduling: Each status update can be added to the start/end of your Buffer queue, posted immediately or scheduled at a specific time<br />
+> - Conditional Publishing: Require taxonomy term(s) to be present for Posts to publish to Buffer<br />
+> - Individual Post Settings: Each Post can have its own Buffer settings<br />
+> - Detailed Logging: Logging can be enabled to troubleshoot occasional issues<br />
+> - WP-Cron: Optionally enable WP-Cron to send status updates via Cron, speeding up UI performance<br />
+> - Support: Access to one on one email support<br />
+> - Documentation: Detailed documentation on how to install and configure the plugin<br />
+> - Updates: Receive one click update notifications, right within your WordPress Adminstration panel<br />
+> - Seamless Upgrade: Retain all current settings when upgrading to Pro<br />
+>
+> [Upgrade to WordPress to Buffer Pro](https://www.wpcube.co.uk/plugins/wordpress-to-buffer-pro/)
 
 = Support =
 
-*Premium Plugins*
-
-For many of our plugins on wordpress.org, Premium versions are available. These typically provide additional functionality,
-and come with one to one email support.
-
-*Free Plugins*
-
 We will do our best to provide support through the WordPress forums. However, please understand that this is a free plugin, 
 so support will be limited. Please read this article on <a href="http://www.wpbeginner.com/beginners-guide/how-to-properly-ask-for-wordpress-support-and-get-it/">how to properly ask for WordPress support and get it</a>.
+
+If you require one to one email support, please consider <a href="http://www.wpcube.co.uk/plugins/wordpress-to-buffer-pro" rel="friend">upgrading to the Pro version</a>.
 
 = WP Cube =
 We produce free and premium WordPress Plugins that supercharge your site, by increasing user engagement, boost site visitor numbers
 and keep your WordPress web sites secure.
 
-Find out more about us:
-
-* <a href="http://www.wpcube.co.uk">Our Plugins</a>
-* <a href="http://www.facebook.com/wpcube">Facebook</a>
-* <a href="http://twitter.com/wp_cube">Twitter</a>
-* <a href="https://plus.google.com/b/110192203343779769233/110192203343779769233/posts?rel=author">Google+</a>
+Find out more about us at <a href="http://www.wpcube.co.uk" rel="friend" title="Premium WordPress Plugins">wpcube.co.uk</a>
 
 == Installation ==
 
 1. Upload the `wp-to-buffer` folder to the `/wp-content/plugins/` directory
-2. Active the WP to Buffer plugin through the 'Plugins' menu in WordPress
-3. Configure the plugin by going to the `WP to Buffer` menu that appears in your admin menu
+2. Active the WordPress to Buffer plugin through the 'Plugins' menu in WordPress
+3. Configure the plugin by going to the `WordPress to Buffer` menu that appears in your admin menu
 
 == Frequently Asked Questions ==
 
@@ -63,6 +66,10 @@ Find out more about us:
 4. Post level settings meta box.
 
 == Changelog ==
+
+= 3.0 =
+* Fix: WordPress 4.2 compatibility
+* Fix: Better security on form submissions
 
 = 2.3.6 =
 * Fix: &hellip; HTML character code appearing on Facebook + Google+ status updates when no excerpt defined on a Post
