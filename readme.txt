@@ -67,6 +67,9 @@ Find out more about us at <a href="http://www.wpcube.co.uk" rel="friend" title="
 
 == Changelog ==
 
+= 3.0.1 =
+* Fix: Shorten links
+
 = 3.0 =
 * Fix: WordPress 4.2 compatibility
 * Fix: Better security on form submissions

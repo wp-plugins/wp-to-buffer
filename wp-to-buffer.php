@@ -2,7 +2,7 @@
 /**
 * Plugin Name: WP to Buffer
 * Plugin URI: http://www.wpcube.co.uk/plugins/wp-to-buffer-pro
-* Version: 3.0
+* Version: 3.0.1
 * Author: WP Cube
 * Author URI: http://www.wpcube.co.uk
 * Description: Send WordPress Pages, Posts or Custom Post Types to your Buffer (bufferapp.com) account for scheduled publishing to social networks.
@@ -32,7 +32,7 @@
 * @package WP Cube
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 3.0
+* @version 3.0.1
 * @copyright WP Cube
 */
 class WPToBuffer {
@@ -47,7 +47,7 @@ class WPToBuffer {
         $this->plugin->name         = 'wp-to-buffer'; // Plugin Folder
         $this->plugin->settingsName = 'wp-to-buffer';
         $this->plugin->displayName  = 'WP to Buffer'; // Plugin Name
-        $this->plugin->version      = '3.0';
+        $this->plugin->version      = '3.0.1';
         $this->plugin->folder       = plugin_dir_path( __FILE__ );
         $this->plugin->url          = plugin_dir_url( __FILE__ );
 
@@ -326,6 +326,9 @@ class WPToBuffer {
 		foreach ($defaults['ids'][$post->post_type] as $profileID=>$enabled) {
 			if ($enabled) $params['profile_ids'][] = $profileID; 
 		}
+
+        // 6a. Shorten Links
+        $params['shorten'] = true;
 		
 		// 7. Send to Buffer
 		delete_post_meta($postID, $this->plugin->settingsName.'-success');
