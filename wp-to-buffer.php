@@ -2,7 +2,7 @@
 /**
 * Plugin Name: WP to Buffer
 * Plugin URI: http://www.wpcube.co.uk/plugins/wp-to-buffer-pro
-* Version: 2.3.2
+* Version: 3.0.1
 * Author: WP Cube
 * Author URI: http://www.wpcube.co.uk
 * Description: Send WordPress Pages, Posts or Custom Post Types to your Buffer (bufferapp.com) account for scheduled publishing to social networks.
@@ -32,49 +32,91 @@
 * @package WP Cube
 * @subpackage WP to Buffer
 * @author Tim Carr
-* @version 2.3.2
+* @version 3.0.1
 * @copyright WP Cube
 */
 class WPToBuffer {
+
     /**
     * Constructor.
     */
-    function WPToBuffer() {
+    function __construct() {
+
         // Plugin Details
-        $this->plugin = new stdClass;
-        $this->plugin->name = 'wp-to-buffer'; // Plugin Folder
+        $this->plugin               = new stdClass;
+        $this->plugin->name         = 'wp-to-buffer'; // Plugin Folder
         $this->plugin->settingsName = 'wp-to-buffer';
-        $this->plugin->displayName = 'WP to Buffer'; // Plugin Name
-        $this->plugin->version = '2.3.2';
-        $this->plugin->folder = WP_PLUGIN_DIR.'/'.$this->plugin->name; // Full Path to Plugin Folder
-        $this->plugin->url = WP_PLUGIN_URL.'/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__));
-        $this->plugin->upgradeReasons = array(
-        	array(__('Settings per Account'), __('Each social media account for each Post Type can have its own settings defined for status updates, images, filtering etc.')),
-        	array(__('Optional Featured Image'), __('Choose to include your featured image or not in each status update.')),
-        	array(__('Send Multiple Times'), __('Send your publish or update status 1, 2 or 3 times to Buffer.')),
-        	array(__('Enhanced Tag Interface'), __('All available tags and taxonomy tags are available, and can be added to your publish and update status messages with a single mouse click.')),
-        	array(__('Send Immediately'), __('Choose to send Posts, Pages and Custom Post Types immediately through your Buffer account.')),
-        	array(__('Taxonomy Level Filtering'), __('Advanced controls to only publish Posts, Pages and/or Custom Post Types that match Taxonomy Term(s).')),
-        	array(__('Post Overrides'), __('Choose to override plugin wide settings on every Page, Post and Custom Post Type, allowing you to define a custom status message, number of times to send, and which accounts to send to.')),
+        $this->plugin->displayName  = 'WP to Buffer'; // Plugin Name
+        $this->plugin->version      = '3.0.1';
+        $this->plugin->folder       = plugin_dir_path( __FILE__ );
+        $this->plugin->url          = plugin_dir_url( __FILE__ );
+
+        // Upgrade Reasons
+        $this->plugin->upgradeReasons = array();
+        $this->plugin->upgradeReasons[] = array(
+            __( 'Pinterest', $this->plugin->name ), 
+            __( 'Post to your Pinterest boards', $this->plugin->name ),
+        );
+        $this->plugin->upgradeReasons[] = array(
+            __( 'Separate Options per Social Network', $this->plugin->name ), 
+            __( 'Define different statuses for each Post Type and Social Network', $this->plugin->name ),
+        );
+        $this->plugin->upgradeReasons[] = array(
+            __( 'Post, Author and Custom Meta Tags', $this->plugin->name ), 
+            __( 'Dynamically build status updates with Post, Author and Meta tags', $this->plugin->name ),
+        );
+        $this->plugin->upgradeReasons[] = array(
+            __( 'Featured Images', $this->plugin->name ), 
+            __( 'Choose to display WordPress Featured Images with your status updates', $this->plugin->name ),
+        );
+        $this->plugin->upgradeReasons[] = array(
+            __( 'Unlimited Statuses per Profile', $this->plugin->name ), 
+            __( 'Send your publish/update statuses any number of times', $this->plugin->name ),
+        );
+        $this->plugin->upgradeReasons[] = array(
+            __( 'Individual Settings per Status', $this->plugin->name ), 
+            __( 'Each status update can have its own unique settings', $this->plugin->name ),
+        );
+        $this->plugin->upgradeReasons[] = array(
+            __( 'Powerful Scheduling', $this->plugin->name ), 
+            __( 'Each status update can be added to the start/end of your Buffer queue, posted immediately or scheduled at a specific time', $this->plugin->name ),
+        );
+        $this->plugin->upgradeReasons[] = array(
+            __( 'Conditional Publishing', $this->plugin->name ), 
+            __( 'Require taxonomy term(s) to be present for Posts to publish to Buffer', $this->plugin->name ),
+        );
+        $this->plugin->upgradeReasons[] = array(
+            __( 'Individual Post Settings', $this->plugin->name ), 
+            __( 'Each Post can have its own Buffer settings', $this->plugin->name ),
+        );
+        $this->plugin->upgradeReasons[] = array(
+            __( 'Detailed Logging', $this->plugin->name ), 
+            __( 'Logging can be enabled to troubleshoot occasional issues', $this->plugin->name ),
+        );
+        $this->plugin->upgradeReasons[] = array(
+            __( 'WP-Cron', $this->plugin->name ), 
+            __( 'Optionally enable WP-Cron to send status updates via Cron, speeding up UI performance', $this->plugin->name ),
         );
         $this->plugin->upgradeURL = 'http://www.wpcube.co.uk/plugins/wp-to-buffer-pro';
         
-		$this->plugin->ignorePostTypes = array('attachment','revision','nav_menu_item');      
+        // Settings
+		$this->plugin->ignorePostTypes = array( 'attachment', 'revision', 'nav_menu_item') ;      
 		$this->plugin->publishDefaultString = 'New Post: {title} {url}';
 		$this->plugin->updateDefaultString = 'Updated Post: {title} {url}';
 		
         // Dashboard Submodule
-        if (!class_exists('WPCubeDashboardWidget')) {
-			require_once($this->plugin->folder.'/_modules/dashboard/dashboard.php');
+        if ( ! class_exists( 'WPCubeDashboardWidget' ) ) {
+			require_once( $this->plugin->folder . '/_modules/dashboard/dashboard.php' );
 		}
-		$dashboard = new WPCubeDashboardWidget($this->plugin); 
+		$dashboard = new WPCubeDashboardWidget( $this->plugin ); 
 		
 		// Hooks
-		add_action('wp_loaded', array(&$this, 'registerPublishHooks'));
         add_action('admin_enqueue_scripts', array(&$this, 'adminScriptsAndCSS'));
         add_action('admin_menu', array(&$this, 'adminPanelsAndMetaBoxes'));
         add_action('admin_notices', array(&$this, 'AdminNotices')); 
+        add_action('wp_loaded', array(&$this, 'registerPublishHooks'));
         add_action('plugins_loaded', array(&$this, 'loadLanguageFiles'));
+
     }
     
     /**
@@ -189,6 +231,10 @@ class WPToBuffer {
         	$isPublishAction = true;
         }
         
+        // Assume we don't publish to Buffer
+    	$updateType = '';
+    	$doPostToBuffer = false;
+        
         // Check at least one account is enabled
         if (!isset($defaults['ids'])) {
         	return false;
@@ -207,13 +253,20 @@ class WPToBuffer {
         	// Publish?
         	if ($defaults['enabled'][$post->post_type]['publish'] != '1') return false; // No Buffer needed for publish
         	$updateType = 'publish';
+        	$doPostToBuffer = true; 
         }
         
 		if ($_POST['original_post_status'] == 'publish') {
         	// Update?
         	if ($defaults['enabled'][$post->post_type]['update'] != '1') return false; // No Buffer needed for update
         	$updateType = 'update';
+        	$doPostToBuffer = true;
         }
+        
+        // If not posting to Buffer, exit
+        if (!$doPostToBuffer) {
+	    	return false;
+	    }
         
 		// 1. Get post categories if any exist
 		$catNames = '';
@@ -237,10 +290,13 @@ class WPToBuffer {
 			$excerpt = $post->post_excerpt;
 		}
 		
+		// 3a. Decode certain entities for FB + G+ compatibility
+		$excerpt = str_replace('&hellip;', '...', $excerpt);
+		
 		// 4. Parse text and description
 		$params['text'] = $defaults['message'][$post->post_type][$updateType];
 		$params['text'] = str_replace('{sitename}', get_bloginfo('name'), $params['text']);
-		$params['text'] = str_replace('{title}', html_entity_decode(apply_filters('the_title', $post->post_title)), $params['text']);
+		$params['text'] = str_replace('{title}', $post->post_title, $params['text']);
 		$params['text'] = str_replace('{excerpt}', $excerpt, $params['text']);
 		$params['text'] = str_replace('{category}', trim($catNames), $params['text']);
 		$params['text'] = str_replace('{date}', date('dS F Y', strtotime($post->post_date)), $params['text']);
@@ -270,11 +326,9 @@ class WPToBuffer {
 		foreach ($defaults['ids'][$post->post_type] as $profileID=>$enabled) {
 			if ($enabled) $params['profile_ids'][] = $profileID; 
 		}
-		
-		// If text is empty, something went wrong
-		if (trim($params['text']) == '') {
-			return false;
-		}
+
+        // 6a. Shorten Links
+        $params['shorten'] = true;
 		
 		// 7. Send to Buffer
 		delete_post_meta($postID, $this->plugin->settingsName.'-success');
@@ -293,23 +347,32 @@ class WPToBuffer {
     * Save POSTed data from the Administration Panel into a WordPress option
     */
     function adminPanel() {
-        // Save Settings
+    	// Save Settings
         if (isset($_POST['submit'])) {
-        	// Check the access token, in case it hasn't been copied / pasted correctly
-        	// This happens when you double click the Access Token on http://bufferapp.com/developers/apps, which doesn't
-        	// quite select the entire access token
-        	$tokenLength = strlen($_POST[$this->plugin->name]['accessToken']);
-        	if ($tokenLength > 0) {
-        		// Check if token is missing 1/ at the start
-        		if (substr($_POST[$this->plugin->name]['accessToken'], 0, 2) != '1/') {
-        			// Missing
-        			$this->errorMessage = __('Oops - you\'ve not quite copied your access token from Buffer correctly. It should start with 1/. Please try again.');
-        		} elseif (substr($_POST[$this->plugin->name]['accessToken'], $tokenLength-4, 4) == 'Edit') {
-        			$this->errorMessage = __('Oops - you\'ve not quite copied your access token from Buffer correctly. It should not end with the word Edit. Please try again.');
-        		}
-        	} else {
-        		$this->errorMessage = __('Please enter an access token to use this plugin. You can obtain one by following the instructions below.');
-        	}
+
+            // Run security checks
+            // Missing nonce 
+            if ( ! isset( $_POST[ $this->plugin->name . '_nonce' ] ) ) { 
+                $this->errorMessage = __( 'Nonce field is missing. Settings NOT saved.', $this->plugin->name );
+            } elseif ( ! wp_verify_nonce( $_POST[$this->plugin->name.'_nonce'], $this->plugin->name ) ) {
+                $this->errorMessage = __('Invalid nonce specified. Settings NOT saved.', $this->plugin->name );
+            } else {
+            	// Check the access token, in case it hasn't been copied / pasted correctly
+            	// This happens when you double click the Access Token on http://bufferapp.com/developers/apps, which doesn't
+            	// quite select the entire access token
+            	$tokenLength = strlen($_POST[$this->plugin->name]['accessToken']);
+            	if ($tokenLength > 0) {
+            		// Check if token is missing 1/ at the start
+            		if (substr($_POST[$this->plugin->name]['accessToken'], 0, 2) != '1/') {
+            			// Missing
+            			$this->errorMessage = __('Oops - you\'ve not quite copied your access token from Buffer correctly. It should start with 1/. Please try again.');
+            		} elseif (substr($_POST[$this->plugin->name]['accessToken'], $tokenLength-4, 4) == 'Edit') {
+            			$this->errorMessage = __('Oops - you\'ve not quite copied your access token from Buffer correctly. It should not end with the word Edit. Please try again.');
+            		}
+            	} else {
+            		$this->errorMessage = __('Please enter an access token to use this plugin. You can obtain one by following the instructions below.');
+            	}
+            }
         	
         	// Test access token to make sure it's valid
         	if (!isset($this->errorMessage)) {
