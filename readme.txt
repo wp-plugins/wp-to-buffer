@@ -1,7 +1,7 @@
 === WordPress to Buffer ===
 Contributors: n7studios,wpcube
 Donate link: http://www.wpcube.co.uk/plugins/wordpress-to-buffer-pro
-Tags: buffer,bufferapp,buffer app,twitter,facebook,linkedin,google,pinterest,social,media,sharing,social media,facebook post,twitter post,linkedin post,google post, pinterest post,social sharing,schedule,auto post,auto publish
+Tags: buffer,bufferapp,buffer app,twitter,facebook,linkedin,google,pinterest,social,media,sharing,social media,facebook post,twitter post,linkedin post,google post,pinterest post,social sharing,schedule,auto post,auto publish
 Requires at least: 3.6
 Tested up to: 4.3
 Stable tag: trunk
